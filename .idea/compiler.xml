@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="auth-service" options="-parameters" />
+      <module name="auth-service.main" options="-parameters" />
+      <module name="auth-service.test" options="-parameters" />
+      <module name="digital-banking-platform-k8s.api-gateway" options="-parameters" />
+      <module name="digital-banking-platform-k8s.api-gateway.main" options="-parameters" />
+      <module name="digital-banking-platform-k8s.api-gateway.test" options="-parameters" />
+      <module name="digital-banking-platform-k8s.auth-service" options="-parameters" />
+      <module name="digital-banking-platform-k8s.auth-service.main" options="-parameters" />
+      <module name="digital-banking-platform-k8s.auth-service.test" options="-parameters" />
+      <module name="digital-banking-platform-k8s.config-server" options="-parameters" />
+      <module name="digital-banking-platform-k8s.config-server.main" options="-parameters" />
+      <module name="digital-banking-platform-k8s.config-server.test" options="-parameters" />
+      <module name="digital-banking-platform-k8s.wallet-service" options="-parameters" />
+      <module name="digital-banking-platform-k8s.wallet-service.main" options="-parameters" />
+      <module name="digital-banking-platform-k8s.wallet-service.test" options="-parameters" />
+    </option>
+  </component>
+</project>
