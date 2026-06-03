@@ -26,6 +26,7 @@ class AuthResponseTest {
     void testAuthResponseNoArgsConstructor() {
         AuthResponse response = new AuthResponse();
         assertNotNull(response);
+        assertEquals("Bearer", response.getTokenType());
     }
 
     @Test
