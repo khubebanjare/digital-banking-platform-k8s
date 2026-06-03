@@ -39,12 +39,19 @@ public class JwtUtil {
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
-    
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         try {
             final Claims claims = extractAllClaims(token);
             return claimsResolver.apply(claims);
+
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+
+            // Allow expired token claims access
+            return claimsResolver.apply(e.getClaims());
+
         } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+
             throw new IllegalArgumentException("Invalid JWT token", e);
         }
     }
