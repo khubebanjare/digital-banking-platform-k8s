@@ -1,28 +1,24 @@
 package com.digitalpayment.auth.util;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class JwtUtilTest {
 
     private JwtUtil jwtUtil;
-    private String secret;
-    private Long expiration;
 
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtil();
-        secret = "mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm";
-        expiration = 86400000L; // 24 hours
-        
+        String secret = "mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm";
+        Long expiration = 86400000L; // 24 hours
+
         ReflectionTestUtils.setField(jwtUtil, "secret", secret);
         ReflectionTestUtils.setField(jwtUtil, "expiration", expiration);
     }
@@ -77,10 +73,9 @@ class JwtUtilTest {
     }
 
     @Test
-    void testIsTokenExpiredWithNullExpiration() {
+    void testIsTokenExpiredWithNegativeExpiration() {
+        ReflectionTestUtils.setField(jwtUtil, "expiration", -5000L); // negative expiration
         String token = jwtUtil.generateToken("john@example.com");
-        ReflectionTestUtils.setField(jwtUtil, "expiration", -100000L); // negative expiration
-        
         Boolean isExpired = jwtUtil.isTokenExpired(token);
         assertTrue(isExpired);
     }
@@ -110,11 +105,30 @@ class JwtUtilTest {
     }
 
     @Test
-    void testValidateExpiredToken() {
+    void testValidateNonExpiredToken() {
+        // This test validates that a non-expired token is valid
+        // The setUp method already initializes jwtUtil with 24-hour expiration
         String token = jwtUtil.generateToken("john@example.com");
-        ReflectionTestUtils.setField(jwtUtil, "expiration", -100000L); // make token expired
-        
+
+        // Token should not be expired
+        Boolean isExpired = jwtUtil.isTokenExpired(token);
+        assertFalse(isExpired);
+
+        // Token should be valid
         Boolean isValid = jwtUtil.validateToken(token, "john@example.com");
+        assertTrue(isValid);
+    }
+
+    @Test
+    void testValidateExpiredToken() {
+        ReflectionTestUtils.setField(jwtUtil, "expiration", 1L);
+        String token = jwtUtil.generateToken("john@example.com");
+
+        Boolean isExpired = jwtUtil.isTokenExpired(token);
+        assertTrue(isExpired);
+
+        Boolean isValid = jwtUtil.validateToken(token, "john@example.com");
+
         assertFalse(isValid);
     }
 

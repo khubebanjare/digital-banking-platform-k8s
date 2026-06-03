@@ -7,11 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.context.request.ServletWebRequest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,15 +88,23 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleValidationExceptions() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        
-        FieldError fieldError = mock(FieldError.class);
-        when(fieldError.getField()).thenReturn("email");
-        when(fieldError.getDefaultMessage()).thenReturn("Invalid email format");
-        
-        when(ex.getBindingResult().getAllErrors()).thenReturn(java.util.List.of(fieldError));
 
-        ResponseEntity<Map<String, Object>> response = globalExceptionHandler
-                .handleValidationExceptions(ex);
+        BindingResult bindingResult = mock(BindingResult.class);
+
+        FieldError fieldError = mock(FieldError.class);
+
+        when(fieldError.getField()).thenReturn("email");
+        when(fieldError.getDefaultMessage())
+                .thenReturn("Invalid email format");
+
+        when(ex.getBindingResult())
+                .thenReturn(bindingResult);
+
+        when(bindingResult.getAllErrors())
+                .thenReturn(List.of(fieldError));
+
+        ResponseEntity<Map<String, Object>> response =
+                globalExceptionHandler.handleValidationExceptions(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());

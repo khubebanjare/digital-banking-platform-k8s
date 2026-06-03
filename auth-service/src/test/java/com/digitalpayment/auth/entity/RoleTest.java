@@ -23,7 +23,7 @@ class RoleTest {
     @Test
     void testRoleValues() {
         Role[] roles = Role.values();
-        assertEquals(2, roles.length);
+        assertEquals(3, roles.length);
     }
 
     @Test
