@@ -2,8 +2,7 @@ package com.digitalpayment.auth.entity;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RoleTest {
 
@@ -41,11 +40,5 @@ class RoleTest {
 
         assertEquals(user1, user2);
         assertNotEquals(user1, admin);
-    }
-
-    private void assertNotEquals(Object obj1, Object obj2) {
-        if (obj1.equals(obj2)) {
-            throw new AssertionError("Objects should not be equal");
-        }
     }
 }

@@ -6,12 +6,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class SecurityConfigTest {
@@ -49,12 +48,5 @@ class SecurityConfigTest {
 
         assertNotNull(encodedPassword);
         assertTrue(encoder.matches(rawPassword, encodedPassword));
-    }
-
-    private boolean assertTrue(boolean condition) {
-        if (!condition) {
-            throw new AssertionError("Expected true but was false");
-        }
-        return true;
     }
 }
