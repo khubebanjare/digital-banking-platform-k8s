@@ -9,3 +9,4 @@ spring:
       server:
         git:
           uri: https://github.com/khubebanjare/digital-payment-config-repo.git
+          search-paths: /domains/*/*/
