@@ -36,7 +36,8 @@ public class AuthServiceImpl implements IAuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         
         user = userRepository.save(user);
-        
+        System.out.println("Saved User ID: " + user.getId());
+
         String token = jwtUtil.generateToken(user.getEmail());
         
         return new AuthResponse(token, "Bearer", user.getId(), user.getEmail(), 
