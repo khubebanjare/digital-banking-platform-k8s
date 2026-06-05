@@ -47,9 +47,7 @@ stages {
 
 post {
     always {
-        junit '*
-build/test-results/test
-.xml'
+        junit '*build/test-results/test.xml'
     }
 
     success {
