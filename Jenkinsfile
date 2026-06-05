@@ -1,63 +1,43 @@
 pipeline {
-agent any
+    agent any
 
-tools {
-    jdk 'jdk21'
-}
-
-environment {
-    GRADLE_OPTS = '-Dorg.gradle.daemon=false'
-}
-
-stages {
-
-    stage('Checkout') {
-        steps {
-            checkout scm
-        }
+    tools {
+        jdk 'jdk21'
     }
 
-    stage('Build') {
-        steps {
-             sh './gradlew :auth-service:clean :auth-service:build'
-        }
+    environment {
+        GRADLE_OPTS = '-Dorg.gradle.daemon=false'
     }
 
-    stage('Unit Tests') {
-        steps {
-            sh './gradlew test'
-        }
-    }
+    stages {
 
-    stage('Code Coverage') {
-        steps {
-            sh './gradlew jacocoTestReport'
-        }
-    }
-
-    stage('SonarQube Analysis') {
-        steps {
-            withSonarQubeEnv('SonarQube') {
-                sh './gradlew sonar'
+        stage('Checkout') {
+            steps {
+                checkout scm
             }
-            echo 'SonarQube stage will be configured next'
+        }
+
+        stage('Build') {
+            steps {
+                sh './gradlew :auth-service:clean :auth-service:build'
+            }
+        }
+
+        stage('JaCoCo Coverage') {
+            steps {
+                sh './gradlew :auth-service:jacocoTestReport'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh './gradlew :auth-service:sonar'
+                }
+            }
         }
     }
-}
 
-post {
-    always {
-        junit '*build/test-results/test.xml'
-    }
-
-    success {
-        echo 'Build completed successfully'
-    }
-
-    failure {
-        echo 'Build failed'
-    }
-}
     post {
         always {
             junit allowEmptyResults: true,
@@ -65,11 +45,11 @@ post {
         }
 
         success {
-            echo 'Build completed successfully'
+            echo 'Auth Service Build Successful'
         }
 
         failure {
-            echo 'Build failed'
+            echo 'Auth Service Build Failed'
         }
     }
 
