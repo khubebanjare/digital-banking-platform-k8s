@@ -40,6 +40,7 @@ stages {
             withSonarQubeEnv('SonarQube') {
                 sh './gradlew sonar'
             }
+            echo 'SonarQube stage will be configured next'
         }
     }
 }
