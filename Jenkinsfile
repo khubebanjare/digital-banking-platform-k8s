@@ -58,5 +58,19 @@ post {
         echo 'Build failed'
     }
 }
+    post {
+        always {
+            junit allowEmptyResults: true,
+                    testResults: '**/build/test-results/test/*.xml'
+        }
+
+        success {
+            echo 'Build completed successfully'
+        }
+
+        failure {
+            echo 'Build failed'
+        }
+    }
 
 }
