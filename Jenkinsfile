@@ -19,7 +19,7 @@ stages {
 
     stage('Build') {
         steps {
-            sh './gradlew clean build'
+             sh './gradlew :auth-service:clean :auth-service:build'
         }
     }
 
