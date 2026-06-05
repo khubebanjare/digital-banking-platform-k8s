@@ -1,7 +1,7 @@
-spring:
-  cloud:
-    config:
-      enabled: false
-
-  config:
-    import: ""
+#spring:
+#  cloud:
+#    config:
+#      enabled: false
+#
+#  config:
+#    import: ""
