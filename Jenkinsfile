@@ -6,7 +6,15 @@ pipeline {
     }
 
     environment {
-        GRADLE_OPTS = '-Dorg.gradle.daemon=false'
+        GRADLE_OPTS = '-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"'
+        JAVA_HOME = '/opt/jdk-21.0.11'
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        retry(2)
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     stages {
@@ -19,26 +27,52 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh './gradlew :auth-service:clean :auth-service:build'
+                retry(3) {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        sh './gradlew :auth-service:clean :auth-service:build --no-daemon --stacktrace'
+                    }
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                retry(2) {
+                    timeout(time: 15, unit: 'MINUTES') {
+                        sh './gradlew :auth-service:test --no-daemon --stacktrace'
+                    }
+                }
             }
         }
 
         stage('JaCoCo Coverage') {
             steps {
-                sh './gradlew :auth-service:jacocoTestReport'
+                retry(2) {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        sh './gradlew :auth-service:jacocoTestReport --no-daemon'
+                    }
+                }
             }
         }
 
         stage('Mutation Testing') {
             steps {
-                sh './gradlew :auth-service:pitest'
+                retry(2) {
+                    timeout(time: 15, unit: 'MINUTES') {
+                        sh './gradlew :auth-service:pitest --no-daemon'
+                    }
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh './gradlew :auth-service:sonar'
+                retry(2) {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        withSonarQubeEnv('SonarQube') {
+                            sh './gradlew :auth-service:sonar --no-daemon'
+                        }
+                    }
                 }
             }
         }
@@ -49,6 +83,7 @@ pipeline {
             junit allowEmptyResults: true,
                     testResults: '**/build/test-results/test/*.xml'
 
+            cleanWs()
 
             archiveArtifacts(
                     artifacts: 'auth-service/build/reports/jacoco/test/html/**',
