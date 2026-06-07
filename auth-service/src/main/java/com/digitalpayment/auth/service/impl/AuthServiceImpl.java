@@ -81,6 +81,8 @@ public class AuthServiceImpl implements IAuthService {
         } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
             log.warn("Failed login attempt for email: {} - User not found", request.getEmail());
             throw new InvalidCredentialsException("User not found");
+        } catch (InvalidCredentialsException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Unexpected error during login for email: {}", request.getEmail(), e);
             throw new AuthenticationException("Login failed due to server error", e);
