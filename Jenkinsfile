@@ -49,6 +49,17 @@ pipeline {
             junit allowEmptyResults: true,
                     testResults: '**/build/test-results/test/*.xml'
 
+
+            archiveArtifacts(
+                    artifacts: 'auth-service/build/reports/jacoco/test/html/**',
+                    allowEmptyArchive: true
+            )
+
+            archiveArtifacts(
+                    artifacts: 'auth-service/build/reports/pitest/**',
+                    allowEmptyArchive: true
+            )
+
             publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
