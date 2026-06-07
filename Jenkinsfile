@@ -11,6 +11,7 @@ pipeline {
     }
 
     options {
+        skipDefaultCheckout(true)
         timeout(time: 30, unit: 'MINUTES')
         retry(2)
         disableConcurrentBuilds()
