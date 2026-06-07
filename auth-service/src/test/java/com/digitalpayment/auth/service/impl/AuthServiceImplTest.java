@@ -21,12 +21,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
@@ -49,11 +52,10 @@ class AuthServiceImplTest {
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
     private User user;
-    private UUID userId;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         
         registerRequest = new RegisterRequest("John", "Doe", "john@example.com", "password123");
         loginRequest = new LoginRequest("john@example.com", "password123");
@@ -86,7 +88,15 @@ class AuthServiceImplTest {
         
         verify(userRepository).existsByEmail("john@example.com");
         verify(passwordEncoder).encode("password123");
-        verify(userRepository).save(any(User.class));
+        
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User capturedUser = userCaptor.getValue();
+        assertEquals("John", capturedUser.getFirstName());
+        assertEquals("Doe", capturedUser.getLastName());
+        assertEquals("john@example.com", capturedUser.getEmail());
+        assertEquals("encodedPassword", capturedUser.getPassword());
+        
         verify(jwtUtil).generateToken("john@example.com");
     }
 
@@ -146,5 +156,26 @@ class AuthServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
+    }
+
+    @Test
+    void testRegisterWithSystemOutVerification() {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(outputStream));
+
+        try {
+            when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
+            when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+            when(userRepository.save(any(User.class))).thenReturn(user);
+            when(jwtUtil.generateToken("john@example.com")).thenReturn("jwt-token");
+
+            authService.register(registerRequest);
+
+            String output = outputStream.toString();
+            assertTrue(output.contains("Saved User ID:"));
+        } finally {
+            System.setOut(originalOut);
+        }
     }
 }
