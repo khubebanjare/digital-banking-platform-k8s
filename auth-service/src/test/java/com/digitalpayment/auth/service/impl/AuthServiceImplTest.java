@@ -5,12 +5,15 @@ import com.digitalpayment.auth.dto.LoginRequest;
 import com.digitalpayment.auth.dto.RegisterRequest;
 import com.digitalpayment.auth.entity.Role;
 import com.digitalpayment.auth.entity.User;
+import com.digitalpayment.auth.exception.AuthenticationException;
 import com.digitalpayment.auth.exception.DuplicateEmailException;
+import com.digitalpayment.auth.exception.InvalidCredentialsException;
 import com.digitalpayment.auth.repository.UserRepository;
 import com.digitalpayment.auth.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,15 +24,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
@@ -133,7 +133,7 @@ class AuthServiceImplTest {
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
     }
@@ -143,7 +143,7 @@ class AuthServiceImplTest {
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new UsernameNotFoundException("User not found"));
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
     }
@@ -153,29 +153,31 @@ class AuthServiceImplTest {
         Authentication authentication = new UsernamePasswordAuthenticationToken(null, null);
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
     }
 
     @Test
     void testRegisterWithSystemOutVerification() {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(outputStream));
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(jwtUtil.generateToken("john@example.com")).thenReturn("jwt-token");
 
-        try {
-            when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
-            when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-            when(userRepository.save(any(User.class))).thenReturn(user);
-            when(jwtUtil.generateToken("john@example.com")).thenReturn("jwt-token");
+        AuthResponse response = authService.register(registerRequest);
 
-            authService.register(registerRequest);
+        assertNotNull(response);
+        assertEquals("jwt-token", response.getToken());
+    }
 
-            String output = outputStream.toString();
-            assertTrue(output.contains("Saved User ID:"));
-        } finally {
-            System.setOut(originalOut);
-        }
+    @Test
+    void testLoginUnexpectedException() {
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new RuntimeException("Unexpected error"));
+
+        assertThrows(AuthenticationException.class, () -> authService.login(loginRequest));
+        
+        verify(authenticationManager).authenticate(any());
     }
 }

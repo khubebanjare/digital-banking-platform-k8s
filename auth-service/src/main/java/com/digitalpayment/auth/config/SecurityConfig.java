@@ -1,6 +1,7 @@
 package com.digitalpayment.auth.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
     
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -29,6 +31,7 @@ public class SecurityConfig {
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        log.info("Configuring security filter chain");
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
@@ -41,23 +44,29 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
-        return http.build();
+        SecurityFilterChain chain = http.build();
+        log.info("Security filter chain configured successfully");
+        return chain;
     }
     
     @Bean
     public AuthenticationProvider authenticationProvider() {
+        log.info("Configuring authentication provider");
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
+        log.info("Authentication provider configured successfully");
         return authProvider;
     }
     
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        log.info("Configuring authentication manager");
         return config.getAuthenticationManager();
     }
     
     @Bean
     public PasswordEncoder passwordEncoder() {
+        log.info("Configuring BCrypt password encoder");
         return new BCryptPasswordEncoder();
     }
 }

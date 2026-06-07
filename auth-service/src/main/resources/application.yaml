@@ -5,3 +5,59 @@ spring:
     import: "optional:configserver:http://config-server:9999"
   profiles:
     active: k8s.local
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      pool-name: AuthServiceHikariCP
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    connection-timeout: 20000
+    max-connections: 8192
+    accept-count: 100
+
+logging:
+  level:
+    com.digitalpayment.auth: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    db:
+      enabled: true

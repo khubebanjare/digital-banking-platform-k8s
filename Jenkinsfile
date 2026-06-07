@@ -80,10 +80,12 @@ pipeline {
 
     post {
         always {
-            junit allowEmptyResults: true,
-                    testResults: '**/build/test-results/test/*.xml'
 
-            cleanWs()
+            junit(
+                    allowEmptyResults: true,
+                    skipPublishingChecks: true,
+                    testResults: '**/build/test-results/test/*.xml'
+            )
 
             archiveArtifacts(
                     artifacts: 'auth-service/build/reports/jacoco/test/html/**',
@@ -96,33 +98,28 @@ pipeline {
             )
 
             publishHTML([
-                    allowMissing: true,
+                    allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
                     reportDir: 'auth-service/build/reports/jacoco/test/html',
                     reportFiles: 'index.html',
                     reportName: 'JaCoCo Coverage Report'
             ])
+
             echo "==================================="
             echo "QUALITY REPORTS"
             echo "==================================="
 
             echo "JaCoCo Report:"
-            echo "${env.BUILD_URL}artifact/auth-service/build/reports/jacoco/test/html/index.html"
+            echo "${env.BUILD_URL}JaCoCo_20Coverage_20Report/"
 
             echo "PIT Mutation Report:"
             echo "${env.BUILD_URL}artifact/auth-service/build/reports/pitest/index.html"
 
             echo "SonarQube Dashboard:"
             echo "http://localhost:9000/dashboard?id=auth-service"
-        }
 
-        success {
-            echo 'Auth Service Build Successful'
-        }
-
-        failure {
-            echo 'Auth Service Build Failed'
+            cleanWs()
         }
     }
 
