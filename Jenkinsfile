@@ -79,113 +79,88 @@ pipeline {
         }
     }
 
-//    post {
-//        always {
-//
-//            junit(
-//                    allowEmptyResults: true,
-//                    skipPublishingChecks: true,
-//                    testResults: '**/build/test-results/test/*.xml'
-//            )
-//
-//            archiveArtifacts(
-//                    artifacts: 'auth-service/build/reports/jacoco/test/html/**',
-//                    allowEmptyArchive: true
-//            )
-//
-//            archiveArtifacts(
-//                    artifacts: 'auth-service/build/reports/pitest/**',
-//                    allowEmptyArchive: true
-//            )
-//
-//            publishHTML([
-//                    allowMissing: false,
-//                    alwaysLinkToLastBuild: true,
-//                    keepAll: true,
-//                    reportDir: 'auth-service/build/reports/jacoco/test/html',
-//                    reportFiles: 'index.html',
-//                    reportName: 'JaCoCo Coverage Report'
-//            ])
-//
-//            echo "==================================="
-//            echo "QUALITY REPORTS"
-//            echo "==================================="
-//
-//            echo "JaCoCo Report:"
-//            echo "${env.BUILD_URL}JaCoCo_20Coverage_20Report/"
-//
-//            echo "PIT Mutation Report:"
-//            echo "${env.BUILD_URL}artifact/auth-service/build/reports/pitest/index.html"
-//
-//            echo "SonarQube Dashboard:"
-//            echo "http://localhost:9000/dashboard?id=auth-service"
-//
-//            cleanWs()
-//        }
-//        success {
-//            emailext(
-//                    subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-//                    body: """
-//                Build Successful
-//
-//                Project: ${env.JOB_NAME}
-//                Build Number: ${env.BUILD_NUMBER}
-//
-//                Build URL:
-//                ${env.BUILD_URL}
-//            """,
-//                    to: "info.khube@gmail.com"
-//            )
-//        }
-//
-//        failure {
-//            emailext(
-//                    subject: "❌ FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-//                    body: """
-//                Build Failed
-//
-//                Project: ${env.JOB_NAME}
-//                Build Number: ${env.BUILD_NUMBER}
-//
-//                Check Console Output:
-//                ${env.BUILD_URL}
-//
-//                Possible Causes:
-//                - Unit Test Failure
-//                - JaCoCo Threshold Failure
-//                - PIT Mutation Failure
-//                - SonarQube Quality Gate Failure
-//                - Docker Build Failure
-//                - Kubernetes Deployment Failure
-//            """,
-//                    to: "info.khube@gmail.com"
-//            )
-//        }
-        post {
-            always {
-                echo "POST BLOCK EXECUTED"
-            }
+    post {
+        always {
 
-            success {
-                echo "SUCCESS BLOCK EXECUTED"
+            junit(
+                    allowEmptyResults: true,
+                    skipPublishingChecks: true,
+                    testResults: '**/build/test-results/test/*.xml'
+            )
 
-                emailext(
-                        subject: "SUCCESS TEST",
-                        body: "SUCCESS TEST",
-                        to: "info.khube@gmail.com"
-                )
-            }
+            archiveArtifacts(
+                    artifacts: 'auth-service/build/reports/jacoco/test/html/**',
+                    allowEmptyArchive: true
+            )
 
-            failure {
-                echo "FAILURE BLOCK EXECUTED"
+            archiveArtifacts(
+                    artifacts: 'auth-service/build/reports/pitest/**',
+                    allowEmptyArchive: true
+            )
 
-                emailext(
-                        subject: "FAILURE TEST",
-                        body: "FAILURE TEST",
-                        to: "info.khube@gmail.com"
-                )
-            }
+            publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'auth-service/build/reports/jacoco/test/html',
+                    reportFiles: 'index.html',
+                    reportName: 'JaCoCo Coverage Report'
+            ])
+
+            echo "==================================="
+            echo "QUALITY REPORTS"
+            echo "==================================="
+
+            echo "JaCoCo Report:"
+            echo "${env.BUILD_URL}JaCoCo_20Coverage_20Report/"
+
+            echo "PIT Mutation Report:"
+            echo "${env.BUILD_URL}artifact/auth-service/build/reports/pitest/index.html"
+
+            echo "SonarQube Dashboard:"
+            echo "http://localhost:9000/dashboard?id=auth-service"
+
+            cleanWs()
         }
-   // }
+        success {
+            emailext(
+                    subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                Build Successful
+
+                Project: ${env.JOB_NAME}
+                Build Number: ${env.BUILD_NUMBER}
+
+                Build URL:
+                ${env.BUILD_URL}
+            """,
+                    to: "info.khube@gmail.com"
+            )
+        }
+
+        failure {
+            emailext(
+                    subject: "❌ FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                Build Failed
+
+                Project: ${env.JOB_NAME}
+                Build Number: ${env.BUILD_NUMBER}
+
+                Check Console Output:
+                ${env.BUILD_URL}
+
+                Possible Causes:
+                - Unit Test Failure
+                - JaCoCo Threshold Failure
+                - PIT Mutation Failure
+                - SonarQube Quality Gate Failure
+                - Docker Build Failure
+                - Kubernetes Deployment Failure
+            """,
+                    to: "info.khube@gmail.com"
+            )
+        }
+    }
 
 }
