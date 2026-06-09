@@ -1,0 +1,84 @@
+  services:
+
+    postgres:
+      image: postgres:17
+
+      container_name: postgres
+
+      environment:
+        POSTGRES_DB: auth_k8s_db
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+
+      ports:
+        - "5433:5432"
+
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+
+      networks:
+        - digital-payment-network
+
+
+
+    config-server:
+      build:
+        context: ../../config-server
+
+      container_name: config-server
+
+      ports:
+        - "9999:9999"
+
+      healthcheck:
+        test: [ "CMD", "wget", "--spider", "-q", "http://localhost:9999/actuator/health" ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+
+      environment:
+        SPRING_PROFILES_ACTIVE: docker
+        SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
+
+      networks:
+        - digital-payment-network
+
+
+    auth-service:
+      build:
+        context: ../../auth-service
+
+      depends_on:
+        postgres:
+          condition: service_healthy
+        config-server:
+          condition: service_healthy
+
+      container_name: auth-service
+
+      ports:
+        - "8081:8080"
+
+      environment:
+        SPRING_PROFILES_ACTIVE: docker
+        SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
+
+      networks:
+        - digital-payment-network
+
+
+
+  networks:
+    digital-payment-network:
+      driver: bridge
+
+
+
+  volumes:
+    postgres_data:

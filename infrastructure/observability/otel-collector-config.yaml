@@ -1,0 +1,37 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  prometheusremotewrite:
+    endpoint: ${PROMETHEUS_OTLP_ENDPOINT}
+    headers:
+      Authorization: "Basic ${PROMETHEUS_AUTH_BASE64_TOKEN}"
+
+  otlphttp/loki:
+    endpoint: ${LOKI_OTLP_ENDPOINT}
+    headers:
+      Authorization: "Basic ${LOKI_AUTH_BASE64_TOKEN}"
+
+  otlp/tempo:
+    endpoint: ${TEMPO_OTLP_ENDPOINT}
+    tls:
+      insecure: false
+    headers:
+      Authorization: "Basic ${TEMPO_AUTH_BASE64_TOKEN}"
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheusremotewrite]
+    logs:
+      receivers: [otlp]
+      exporters: [otlphttp/loki]
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/tempo]

@@ -1,0 +1,28 @@
+apiVersion: 1
+
+groups:
+  - name: cpu-alerts
+    interval: 1m
+
+    rules:
+      - uid: high-cpu
+        title: High CPU Usage
+        condition: A
+        for: 2m
+
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: process_cpu_usage > 0.8
+
+        noDataState: NoData
+        execErrState: Alerting
+
+        annotations:
+          summary: "High CPU Usage"
+          description: "CPU utilization has exceeded 80% for more than 2 minutes."
+
+        labels:
+          severity: warning
+          service: auth-service

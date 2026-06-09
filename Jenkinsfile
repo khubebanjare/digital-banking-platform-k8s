@@ -122,6 +122,45 @@ pipeline {
 
             cleanWs()
         }
+        success {
+            emailext(
+                    subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                Build Successful
+
+                Project: ${env.JOB_NAME}
+                Build Number: ${env.BUILD_NUMBER}
+
+                Build URL:
+                ${env.BUILD_URL}
+            """,
+                    to: "info.khube@gmail.com"
+            )
+        }
+
+        failure {
+            emailext(
+                    subject: "❌ FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                Build Failed
+
+                Project: ${env.JOB_NAME}
+                Build Number: ${env.BUILD_NUMBER}
+
+                Check Console Output:
+                ${env.BUILD_URL}
+
+                Possible Causes:
+                - Unit Test Failure
+                - JaCoCo Threshold Failure
+                - PIT Mutation Failure
+                - SonarQube Quality Gate Failure
+                - Docker Build Failure
+                - Kubernetes Deployment Failure
+            """,
+                    to: "info.khube@gmail.com"
+            )
+        }
     }
 
 }
