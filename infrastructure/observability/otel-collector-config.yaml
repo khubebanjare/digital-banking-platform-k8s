@@ -8,21 +8,21 @@ receivers:
 
 exporters:
   prometheusremotewrite:
-    endpoint: ${PROMETHEUS_OTLP_ENDPOINT}
+    endpoint: https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push
     headers:
-      Authorization: "Basic ${PROMETHEUS_AUTH_BASE64_TOKEN}"
+      Authorization: "Basic MzI4ODg3MDpnbGNfZXlKdklqb2lNVGd3TXpRMk1DSXNJbTRpT2lKemRHRmpheTB4TmpneU16SXpMVzkwYkhBdGQzSnBkR1V0WVhWMGFDMTBiMnRsYmlJc0ltc2lPaUl3Y0VvNFNUWllNelZ6T0ZGMlZqRTBZakpXVUZOd1J6VWlMQ0p0SWpwN0luSWlPaUp3Y205a0xXRndMWE52ZFhSb0xURWlmWDA9"
 
   otlphttp/loki:
-    endpoint: ${LOKI_OTLP_ENDPOINT}
+    endpoint: https://logs-prod-028.grafana.net/otlp
     headers:
-      Authorization: "Basic ${LOKI_AUTH_BASE64_TOKEN}"
+      Authorization: "Basic MTY0MDExMDpnbGNfZXlKdklqb2lNVGd3TXpRMk1DSXNJbTRpT2lKemRHRmpheTB4TmpneU16SXpMVzkwYkhBdGQzSnBkR1V0WVhWMGFDMTBiMnRsYmlJc0ltc2lPaUl3Y0VvNFNUWllNelZ6T0ZGMlZqRTBZakpXVUZOd1J6VWlMQ0p0SWpwN0luSWlPaUp3Y205a0xXRndMWE52ZFhSb0xURWlmWDA9"
 
   otlp/tempo:
-    endpoint: ${TEMPO_OTLP_ENDPOINT}
+    endpoint: tempo-prod-19-prod-ap-south-1.grafana.net:443
     tls:
       insecure: false
     headers:
-      Authorization: "Basic ${TEMPO_AUTH_BASE64_TOKEN}"
+      Authorization: "Basic MTYzNDQxMTpnbGNfZXlKdklqb2lNVGd3TXpRMk1DSXNJbTRpT2lKemRHRmpheTB4TmpneU16SXpMVzkwYkhBdGQzSnBkR1V0WVhWMGFDMTBiMnRsYmlJc0ltc2lPaUl3Y0VvNFNUWllNelZ6T0ZGMlZqRTBZakpXVUZOd1J6VWlMQ0p0SWpwN0luSWlPaUp3Y205a0xXRndMWE52ZFhSb0xURWlmWDA9"
 
 service:
   pipelines:
