@@ -5,12 +5,15 @@ import com.digitalpayment.auth.dto.LoginRequest;
 import com.digitalpayment.auth.dto.RegisterRequest;
 import com.digitalpayment.auth.entity.Role;
 import com.digitalpayment.auth.entity.User;
+import com.digitalpayment.auth.exception.AuthenticationException;
 import com.digitalpayment.auth.exception.DuplicateEmailException;
+import com.digitalpayment.auth.exception.InvalidCredentialsException;
 import com.digitalpayment.auth.repository.UserRepository;
 import com.digitalpayment.auth.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,11 +52,10 @@ class AuthServiceImplTest {
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
     private User user;
-    private UUID userId;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         
         registerRequest = new RegisterRequest("John", "Doe", "john@example.com", "password123");
         loginRequest = new LoginRequest("john@example.com", "password123");
@@ -86,7 +88,15 @@ class AuthServiceImplTest {
         
         verify(userRepository).existsByEmail("john@example.com");
         verify(passwordEncoder).encode("password123");
-        verify(userRepository).save(any(User.class));
+        
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User capturedUser = userCaptor.getValue();
+        assertEquals("John", capturedUser.getFirstName());
+        assertEquals("Doe", capturedUser.getLastName());
+        assertEquals("john@example.com", capturedUser.getEmail());
+        assertEquals("encodedPassword", capturedUser.getPassword());
+        
         verify(jwtUtil).generateToken("john@example.com");
     }
 
@@ -123,7 +133,7 @@ class AuthServiceImplTest {
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
     }
@@ -133,7 +143,7 @@ class AuthServiceImplTest {
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new UsernameNotFoundException("User not found"));
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
     }
@@ -143,7 +153,30 @@ class AuthServiceImplTest {
         Authentication authentication = new UsernamePasswordAuthenticationToken(null, null);
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
+        
+        verify(authenticationManager).authenticate(any());
+    }
+
+    @Test
+    void testRegisterWithSystemOutVerification() {
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(jwtUtil.generateToken("john@example.com")).thenReturn("jwt-token");
+
+        AuthResponse response = authService.register(registerRequest);
+
+        assertNotNull(response);
+        assertEquals("jwt-token", response.getToken());
+    }
+
+    @Test
+    void testLoginUnexpectedException() {
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new RuntimeException("Unexpected error"));
+
+        assertThrows(AuthenticationException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
     }

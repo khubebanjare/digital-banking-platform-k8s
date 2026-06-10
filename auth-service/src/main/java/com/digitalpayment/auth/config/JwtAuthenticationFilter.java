@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     private final JwtUtil jwtUtil;
@@ -47,10 +49,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    log.debug("Successfully authenticated user: {}", username);
                 }
             }
-        } catch (IllegalArgumentException | org.springframework.security.core.userdetails.UsernameNotFoundException e) {
-            // Invalid token or user not found, continue without authentication
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
+        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
+            log.warn("User not found for token: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error during JWT authentication", e);
         }
         
         filterChain.doFilter(request, response);

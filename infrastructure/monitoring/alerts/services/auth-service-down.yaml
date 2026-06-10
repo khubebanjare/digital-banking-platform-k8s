@@ -1,0 +1,30 @@
+apiVersion: 1
+
+groups:
+  - name: auth-service-alerts
+    interval: 1m
+
+    rules:
+      - uid: auth-service-down
+        title: Auth Service Down
+        condition: A
+
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: up{job="auth-service"} == 0
+
+        for: 2m
+
+        noDataState: Alerting
+        execErrState: Alerting
+
+        annotations:
+          summary: "Auth Service Down"
+          description: "Auth Service has been unavailable for more than 2 minutes."
+
+        labels:
+          severity: critical
+          team: backend
+          service: auth-service
