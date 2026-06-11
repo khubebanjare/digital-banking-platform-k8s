@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.6'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '4.0.6' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
     id 'jacoco'
     id 'org.sonarqube' version '6.2.0.5505'
     id 'info.solidsoft.pitest' version '1.19.0'
@@ -87,22 +87,21 @@ subprojects {
         mavenCentral()
     }
 
+subprojects {
+        apply plugin: 'java'
+
     dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-        implementation 'io.opentelemetry:opentelemetry-api'
-        implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
-        implementation 'io.micrometer:micrometer-registry-prometheus'
-
-        compileOnly 'org.projectlombok:lombok'
-        annotationProcessor 'org.projectlombok:lombok'
-
-        testCompileOnly 'org.projectlombok:lombok'
-        testAnnotationProcessor 'org.projectlombok:lombok'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation 'org.mockito:mockito-core'
         testImplementation 'org.junit.jupiter:junit-jupiter'
     }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+}
 
     tasks.named('test') {
         useJUnitPlatform()

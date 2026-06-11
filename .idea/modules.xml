@@ -2,14 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/api-gateway/digital-banking-platform-k8s.api-gateway.main.iml" filepath="$PROJECT_DIR$/.idea/modules/api-gateway/digital-banking-platform-k8s.api-gateway.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/api-gateway/digital-banking-platform-k8s.api-gateway.test.iml" filepath="$PROJECT_DIR$/.idea/modules/api-gateway/digital-banking-platform-k8s.api-gateway.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/auth-service.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth-service.test.iml" filepath="$PROJECT_DIR$/.idea/modules/auth-service.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth-service/digital-banking-platform-k8s.auth-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/auth-service/digital-banking-platform-k8s.auth-service.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth-service/digital-banking-platform-k8s.auth-service.test.iml" filepath="$PROJECT_DIR$/.idea/modules/auth-service/digital-banking-platform-k8s.auth-service.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/config-server/digital-banking-platform-k8s.config-server.main.iml" filepath="$PROJECT_DIR$/.idea/modules/config-server/digital-banking-platform-k8s.config-server.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/config-server/digital-banking-platform-k8s.config-server.test.iml" filepath="$PROJECT_DIR$/.idea/modules/config-server/digital-banking-platform-k8s.config-server.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/wallet-service/digital-banking-platform-k8s.wallet-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/wallet-service/digital-banking-platform-k8s.wallet-service.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/wallet-service/digital-banking-platform-k8s.wallet-service.test.iml" filepath="$PROJECT_DIR$/.idea/modules/wallet-service/digital-banking-platform-k8s.wallet-service.test.iml" />
     </modules>
   </component>
 </project>

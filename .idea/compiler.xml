@@ -7,14 +7,8 @@
         <processorPath useClasspath="false">
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.46/a5cfe99fdf320e84955ef653f2ce1bf789d11385/lombok-1.18.46.jar" />
         </processorPath>
-        <module name="digital-banking-platform-k8s.wallet-service.test" />
-        <module name="digital-banking-platform-k8s.wallet-service.main" />
-        <module name="digital-banking-platform-k8s.auth-service.test" />
-        <module name="digital-banking-platform-k8s.api-gateway.main" />
-        <module name="digital-banking-platform-k8s.config-server.test" />
-        <module name="digital-banking-platform-k8s.api-gateway.test" />
-        <module name="digital-banking-platform-k8s.auth-service.main" />
-        <module name="digital-banking-platform-k8s.config-server.main" />
+        <module name="auth-service.main" />
+        <module name="auth-service.test" />
       </profile>
     </annotationProcessing>
   </component>
@@ -23,7 +17,6 @@
       <module name="auth-service" options="-parameters" />
       <module name="auth-service.main" options="-parameters" />
       <module name="auth-service.test" options="-parameters" />
-      <module name="digital-banking-platform-k8s" options="-parameters" />
       <module name="digital-banking-platform-k8s.api-gateway" options="-parameters" />
       <module name="digital-banking-platform-k8s.api-gateway.main" options="-parameters" />
       <module name="digital-banking-platform-k8s.api-gateway.test" options="-parameters" />
@@ -33,8 +26,6 @@
       <module name="digital-banking-platform-k8s.config-server" options="-parameters" />
       <module name="digital-banking-platform-k8s.config-server.main" options="-parameters" />
       <module name="digital-banking-platform-k8s.config-server.test" options="-parameters" />
-      <module name="digital-banking-platform-k8s.main" options="-parameters" />
-      <module name="digital-banking-platform-k8s.test" options="-parameters" />
       <module name="digital-banking-platform-k8s.wallet-service" options="-parameters" />
       <module name="digital-banking-platform-k8s.wallet-service.main" options="-parameters" />
       <module name="digital-banking-platform-k8s.wallet-service.test" options="-parameters" />
