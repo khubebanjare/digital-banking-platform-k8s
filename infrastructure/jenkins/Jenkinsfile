@@ -1,7 +1,3 @@
 @Library('shared-library') _
 
-microservicePipeline(
-        serviceName: env.JOB_NAME,
-        imageName: "khubebanjare/${env.JOB_NAME}",
-        deployEnv: "dev"
-)
+microservicePipeline()
