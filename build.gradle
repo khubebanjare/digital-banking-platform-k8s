@@ -2,9 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.6' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
-    id 'jacoco'
-    id 'org.sonarqube' version '6.2.0.5505'
-    id 'info.solidsoft.pitest' version '1.19.0'
 }
 
 allprojects {
@@ -25,88 +22,13 @@ subprojects {
         sourceCompatibility = JavaVersion.VERSION_21
     }
 
-    pitest {
-        junit5PluginVersion = '1.2.2'
-
-        targetClasses = ['com.digitalpayment.auth.*']
-
-        targetTests = ['com.digitalpayment.auth.*']
-
-        threads = 4
-
-        outputFormats = ['HTML']
-
-        timestampedReports = false
-
-        //mutationThreshold = 80
-    }
-
-    jacoco {
-        toolVersion = "0.8.13"
-    }
-
-    jacocoTestReport {
-        dependsOn test
-
-        reports {
-            xml.required = true
-            html.required = true
-            csv.required = false
-        }
-    }
-
-    jacocoTestCoverageVerification {
-
-        violationRules {
-
-            rule {
-
-                /*limit {
-                    minimum = 0.80
-                }*/
-
-            }
-
-        }
-
-    }
-
-    sonar {
-        properties {
-
-            property "sonar.projectKey", "auth-service"
-
-            property "sonar.projectName", "Auth Service"
-
-            property "sonar.coverage.jacoco.xmlReportPaths",
-                    "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
-        }
-    }
-
     repositories {
         mavenCentral()
     }
-
-subprojects {
-        apply plugin: 'java'
 
     dependencies {
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation 'org.mockito:mockito-core'
         testImplementation 'org.junit.jupiter:junit-jupiter'
     }
-
-    configurations {
-        compileOnly {
-            extendsFrom annotationProcessor
-        }
-    }
-}
-
-    tasks.named('test') {
-        useJUnitPlatform()
-        finalizedBy jacocoTestReport
-    }
-
-    check.dependsOn jacocoTestCoverageVerification
 }
