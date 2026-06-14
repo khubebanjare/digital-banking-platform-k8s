@@ -8,7 +8,7 @@ class RoleTest {
 
   @Test
   void testRoleUserValue() {
-    Role role = Role.USER;
+    Role role = com.digitalpayment.auth.entity.Role.USER;
     assertEquals("USER", role.name());
     assertNotNull(role);
   }

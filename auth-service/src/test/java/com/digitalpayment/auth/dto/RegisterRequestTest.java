@@ -9,7 +9,7 @@ class RegisterRequestTest {
 
   @Test
   void testRegisterRequestCreation() {
-    RegisterRequest request = new RegisterRequest("John", "Doe", "john@example.com", "password123");
+    com.digitalpayment.auth.dto.RegisterRequest request = new RegisterRequest("John", "Doe", "john@example.com", "password123");
 
     assertEquals("John", request.getFirstName());
     assertEquals("Doe", request.getLastName());

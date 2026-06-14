@@ -37,7 +37,7 @@ class JwtAuthenticationFilterTest {
 
   @Mock private FilterChain filterChain;
 
-  @InjectMocks private JwtAuthenticationFilter jwtAuthenticationFilter;
+  @InjectMocks private com.digitalpayment.auth.config.JwtAuthenticationFilter jwtAuthenticationFilter;
 
   private User user;
 

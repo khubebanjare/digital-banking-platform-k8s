@@ -25,7 +25,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @ExtendWith(MockitoExtension.class)
 class SecurityConfigTest {
 
-  @Mock private JwtAuthenticationFilter jwtAuthenticationFilter;
+  @Mock private com.digitalpayment.auth.config.JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Mock private CustomUserDetailsService userDetailsService;
 

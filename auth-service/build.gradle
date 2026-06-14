@@ -83,14 +83,8 @@ spotless {
 
 dependencyCheck {
 	failBuildOnCVSS = 7
-
 	formats = ['HTML', 'JSON']
-
 	suppressionFile = 'dependency-check-suppressions.xml'
-
-	analyzers {
-		assemblyEnabled = false
-	}
 }
 
 	repositories {

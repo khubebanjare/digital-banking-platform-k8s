@@ -11,7 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 class UserTest {
 
-  private User user;
+  private com.digitalpayment.auth.entity.User user;
   private UUID userId;
 
   @BeforeEach

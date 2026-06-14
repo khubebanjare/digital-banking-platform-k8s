@@ -11,7 +11,7 @@ class AuthResponseTest {
   @Test
   void testAuthResponseCreation() {
     UUID userId = UUID.randomUUID();
-    AuthResponse response =
+    com.digitalpayment.auth.dto.AuthResponse response =
         new AuthResponse("token", "Bearer", userId, "john@example.com", "John", "Doe");
 
     assertEquals("token", response.getToken());

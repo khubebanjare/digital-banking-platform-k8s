@@ -20,7 +20,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 
 class GlobalExceptionHandlerTest {
 
-  private GlobalExceptionHandler globalExceptionHandler;
+  private com.digitalpayment.auth.exception.GlobalExceptionHandler globalExceptionHandler;
   private ServletWebRequest webRequest;
 
   @BeforeEach

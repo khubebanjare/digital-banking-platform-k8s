@@ -27,7 +27,7 @@ class AuthControllerTest {
 
   @Mock private IAuthService authService;
 
-  @InjectMocks private AuthController authController;
+  @InjectMocks private com.digitalpayment.auth.controller.AuthController authController;
 
   private MockMvc mockMvc;
   private ObjectMapper objectMapper;
