@@ -9,7 +9,9 @@ class ErrorResponseTest {
 
   @Test
   void testErrorResponseCreation() {
-    com.digitalpayment.auth.dto.ErrorResponse response = new com.digitalpayment.auth.dto.ErrorResponse(404, "Not Found", "Resource not found", "/api/test");
+    com.digitalpayment.auth.dto.ErrorResponse response =
+        new com.digitalpayment.auth.dto.ErrorResponse(
+            404, "Not Found", "Resource not found", "/api/test");
 
     assertEquals(404, response.getStatus());
     assertEquals("Not Found", response.getError());

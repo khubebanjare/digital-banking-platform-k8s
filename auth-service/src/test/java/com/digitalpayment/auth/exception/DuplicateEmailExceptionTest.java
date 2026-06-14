@@ -10,7 +10,8 @@ class DuplicateEmailExceptionTest {
   @Test
   void testDuplicateEmailExceptionMessage() {
     String message = "Email already exists";
-    com.digitalpayment.auth.exception.DuplicateEmailException exception = new DuplicateEmailException(message);
+    com.digitalpayment.auth.exception.DuplicateEmailException exception =
+        new DuplicateEmailException(message);
 
     assertEquals(message, exception.getMessage());
   }

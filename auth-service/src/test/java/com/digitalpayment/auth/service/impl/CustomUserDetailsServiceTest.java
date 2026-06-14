@@ -23,7 +23,8 @@ class CustomUserDetailsServiceTest {
 
   @Mock private UserRepository userRepository;
 
-  @InjectMocks private com.digitalpayment.auth.service.impl.CustomUserDetailsService customUserDetailsService;
+  @InjectMocks
+  private com.digitalpayment.auth.service.impl.CustomUserDetailsService customUserDetailsService;
 
   private User user;
 

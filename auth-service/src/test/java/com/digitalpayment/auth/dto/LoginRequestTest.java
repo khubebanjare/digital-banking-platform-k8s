@@ -9,7 +9,8 @@ class LoginRequestTest {
 
   @Test
   void testLoginRequestCreation() {
-    com.digitalpayment.auth.dto.LoginRequest request = new com.digitalpayment.auth.dto.LoginRequest("john@example.com", "password123");
+    com.digitalpayment.auth.dto.LoginRequest request =
+        new com.digitalpayment.auth.dto.LoginRequest("john@example.com", "password123");
 
     assertEquals("john@example.com", request.getEmail());
     assertEquals("password123", request.getPassword());
