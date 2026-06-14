@@ -23,6 +23,8 @@ version = '0.0.1-SNAPSHOT'
 
 		timestampedReports = false
 
+		excludedClasses = []
+
 		//mutationThreshold = 80
 	}
 
@@ -82,13 +84,13 @@ version = '0.0.1-SNAPSHOT'
 		implementation 'org.springframework.boot:spring-boot-starter-validation'
 		implementation 'org.springframework.cloud:spring-cloud-starter-config'
 		implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-		implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
 		implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 		implementation 'org.springframework.boot:spring-boot-starter-actuator'
 		implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 		implementation 'io.opentelemetry:opentelemetry-api'
 		implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
 		implementation 'io.micrometer:micrometer-registry-prometheus'
+		implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
 
 		compileOnly 'org.projectlombok:lombok'
 		annotationProcessor 'org.projectlombok:lombok'
