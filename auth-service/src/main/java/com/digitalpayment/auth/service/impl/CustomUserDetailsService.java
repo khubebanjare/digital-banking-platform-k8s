@@ -3,6 +3,7 @@ package com.digitalpayment.auth.service.impl;
 import com.digitalpayment.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,17 +14,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
-    
-    private final UserRepository userRepository;
-    
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        log.debug("Loading user by email: {}", email);
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    log.warn("User not found with email: {}", email);
-                    return new UsernameNotFoundException("User not found with email: " + email);
-                });
-    }
+
+  private final UserRepository userRepository;
+
+  @Override
+  @Transactional(readOnly = true)
+  public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
+    log.debug("Loading user by email: {}", email);
+    return userRepository
+        .findByEmail(email)
+        .orElseThrow(
+            () -> {
+              log.warn("User not found with email: {}", email);
+              return new UsernameNotFoundException("User not found with email: " + email);
+            });
+  }
 }

@@ -4,77 +4,72 @@ import com.digitalpayment.auth.config.VaultProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.util.Date;
+import java.util.function.Function;
+import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.function.Function;
-
 @Component
 public class JwtUtil {
-    
-    private final VaultProperties vaultProperties;
 
-    @Value("${jwt.expiration:86400000}")
-    private Long expiration;
+  private final VaultProperties vaultProperties;
 
-    public JwtUtil(VaultProperties vaultProperties) {
-        this.vaultProperties = vaultProperties;
+  @Value("${jwt.expiration:86400000}")
+  private Long expiration;
+
+  public JwtUtil(VaultProperties vaultProperties) {
+    this.vaultProperties = vaultProperties;
+  }
+
+  private SecretKey getSigningKey() {
+    return Keys.hmacShaKeyFor(vaultProperties.getSecret().getBytes());
+  }
+
+  public String generateToken(String username) {
+    return Jwts.builder()
+        .subject(username)
+        .issuedAt(new Date())
+        .expiration(new Date(System.currentTimeMillis() + expiration))
+        .signWith(getSigningKey())
+        .compact();
+  }
+
+  public String extractUsername(String token) {
+    return extractClaim(token, Claims::getSubject);
+  }
+
+  public Date extractExpiration(String token) {
+    return extractClaim(token, Claims::getExpiration);
+  }
+
+  public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    try {
+      final Claims claims = extractAllClaims(token);
+      return claimsResolver.apply(claims);
+
+    } catch (io.jsonwebtoken.ExpiredJwtException e) {
+
+      // Allow expired token claims access
+      return claimsResolver.apply(e.getClaims());
+
+    } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+
+      throw new IllegalArgumentException("Invalid JWT token", e);
     }
+  }
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(vaultProperties.getSecret().getBytes());
-    }
-    
-    public String generateToken(String username) {
-        return Jwts.builder()
-                .subject(username)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey())
-                .compact();
-    }
-    
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-    
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
+  private Claims extractAllClaims(String token) {
+    return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+  }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        try {
-            final Claims claims = extractAllClaims(token);
-            return claimsResolver.apply(claims);
+  public Boolean isTokenExpired(String token) {
+    Date exp = extractExpiration(token);
+    return exp != null && exp.before(new Date());
+  }
 
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-
-            // Allow expired token claims access
-            return claimsResolver.apply(e.getClaims());
-
-        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
-
-            throw new IllegalArgumentException("Invalid JWT token", e);
-        }
-    }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    public Boolean isTokenExpired(String token) {
-        Date exp = extractExpiration(token);
-        return exp != null && exp.before(new Date());
-    }
-
-    public Boolean validateToken(String token, String username) {
-        final String extractedUsername = extractUsername(token);
-        return (username != null && username.equals(extractedUsername) && !isTokenExpired(token));
-    }
+  public Boolean validateToken(String token, String username) {
+    final String extractedUsername = extractUsername(token);
+    return (username != null && username.equals(extractedUsername) && !isTokenExpired(token));
+  }
 }
