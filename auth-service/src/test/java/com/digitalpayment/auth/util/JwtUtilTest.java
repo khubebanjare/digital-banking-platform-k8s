@@ -1,5 +1,6 @@
 package com.digitalpayment.auth.util;
 
+import com.digitalpayment.auth.config.VaultProperties;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,15 +12,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JwtUtilTest {
 
-    private JwtUtil jwtUtil;
+    private com.digitalpayment.auth.util.JwtUtil jwtUtil;
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil();
-        String secret = "mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm";
-        Long expiration = 86400000L; // 24 hours
+        VaultProperties vaultProperties = new VaultProperties();
+        vaultProperties.setSecret("mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm");
 
-        ReflectionTestUtils.setField(jwtUtil, "secret", secret);
+        jwtUtil = new JwtUtil(vaultProperties);
+        Long expiration = 86400000L; // 24 hours
         ReflectionTestUtils.setField(jwtUtil, "expiration", expiration);
     }
 
@@ -60,7 +61,7 @@ class JwtUtilTest {
     void testExtractClaimWithInvalidToken() {
         String invalidToken = "invalid.token.here";
 
-        assertThrows(IllegalArgumentException.class, () -> 
+        assertThrows(IllegalArgumentException.class, () ->
                 jwtUtil.extractClaim(invalidToken, Claims::getSubject));
     }
 
@@ -136,7 +137,7 @@ class JwtUtilTest {
     void testExtractUsernameWithInvalidToken() {
         String invalidToken = "invalid.token.here";
 
-        assertThrows(IllegalArgumentException.class, () -> 
+        assertThrows(IllegalArgumentException.class, () ->
                 jwtUtil.extractUsername(invalidToken));
     }
 
@@ -144,7 +145,7 @@ class JwtUtilTest {
     void testExtractExpirationWithInvalidToken() {
         String invalidToken = "invalid.token.here";
 
-        assertThrows(IllegalArgumentException.class, () -> 
+        assertThrows(IllegalArgumentException.class, () ->
                 jwtUtil.extractExpiration(invalidToken));
     }
 }

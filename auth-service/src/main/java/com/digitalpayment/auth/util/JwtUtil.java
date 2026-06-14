@@ -1,5 +1,6 @@
 package com.digitalpayment.auth.util;
 
+import com.digitalpayment.auth.config.VaultProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -13,14 +14,17 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
     
-    @Value("${jwt.secret:mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm}")
-    private String secret;
-    
+    private final VaultProperties vaultProperties;
+
     @Value("${jwt.expiration:86400000}")
     private Long expiration;
 
+    public JwtUtil(VaultProperties vaultProperties) {
+        this.vaultProperties = vaultProperties;
+    }
+
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(vaultProperties.getSecret().getBytes());
     }
     
     public String generateToken(String username) {

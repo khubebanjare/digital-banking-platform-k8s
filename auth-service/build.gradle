@@ -10,107 +10,118 @@ plugins {
 group = 'com.digitalpayment'
 version = '0.0.1-SNAPSHOT'
 
-pitest {
-	junit5PluginVersion = '1.2.2'
+	pitest {
+		junit5PluginVersion = '1.2.2'
 
-	targetClasses = ['com.digitalpayment.auth.*']
+		targetClasses = ['com.digitalpayment.auth.*']
 
-	targetTests = ['com.digitalpayment.auth.*']
+		targetTests = ['com.digitalpayment.auth.*']
 
-	threads = 4
+		threads = 4
 
-	outputFormats = ['HTML']
+		outputFormats = ['HTML']
 
-	timestampedReports = false
+		timestampedReports = false
 
-	//mutationThreshold = 80
-}
+		excludedClasses = []
 
-jacoco {
-	toolVersion = "0.8.13"
-}
-
-jacocoTestReport {
-	dependsOn test
-
-	reports {
-		xml.required = true
-		html.required = true
-		csv.required = false
+		//mutationThreshold = 80
 	}
-}
 
-jacocoTestCoverageVerification {
+	jacoco {
+		toolVersion = "0.8.13"
+	}
 
-	violationRules {
+	jacocoTestReport {
+		dependsOn test
 
-		rule {
+		reports {
+			xml.required = true
+			html.required = true
+			csv.required = false
+		}
+	}
 
-			/*limit {
-				minimum = 0.80
-			}*/
+	jacocoTestCoverageVerification {
+
+		violationRules {
+
+			rule {
+
+				/*limit {
+                    minimum = 0.80
+                }*/
+
+			}
 
 		}
 
 	}
 
-}
+	sonar {
+		properties {
 
-sonar {
-	properties {
+			property "sonar.projectKey", "auth-service"
 
-		property "sonar.projectKey", "auth-service"
+			property "sonar.projectName", "Auth Service"
 
-		property "sonar.projectName", "Auth Service"
-
-		property "sonar.coverage.jacoco.xmlReportPaths",
-				"${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
+			property "sonar.coverage.jacoco.xmlReportPaths",
+					"${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
+		}
 	}
-}
 
-repositories {
-	mavenCentral()
-}
-
-ext {
-	set('springCloudVersion', "2025.1.1")
-}
-
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	implementation 'com.fasterxml.jackson.core:jackson-annotations'
-	implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
-	implementation 'io.micrometer:micrometer-registry-prometheus'
-
-	runtimeOnly 'org.postgresql:postgresql'
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-
-	testCompileOnly 'org.projectlombok:lombok'
-	testAnnotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	repositories {
+		mavenCentral()
 	}
-}
 
-tasks.named('test') {
-	useJUnitPlatform()
-	finalizedBy jacocoTestReport
-}
+	ext {
+		set('springCloudVersion', "2025.1.1")
+	}
 
-check.dependsOn jacocoTestCoverageVerification
+	dependencies {
+		implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+		implementation 'org.springframework.boot:spring-boot-starter-security'
+		implementation 'org.springframework.boot:spring-boot-starter-validation'
+		implementation 'org.springframework.cloud:spring-cloud-starter-config'
+		implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+		implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+		implementation 'org.springframework.boot:spring-boot-starter-actuator'
+		implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+		implementation 'io.opentelemetry:opentelemetry-api'
+		implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+		implementation 'io.micrometer:micrometer-registry-prometheus'
+		implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
+
+		compileOnly 'org.projectlombok:lombok'
+		annotationProcessor 'org.projectlombok:lombok'
+
+		testCompileOnly 'org.projectlombok:lombok'
+		testAnnotationProcessor 'org.projectlombok:lombok'
+
+		runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+		runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+		implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+		implementation 'com.fasterxml.jackson.core:jackson-annotations'
+
+		runtimeOnly 'org.postgresql:postgresql'
+		developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+		testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+		testImplementation 'org.mockito:mockito-core'
+		testImplementation 'org.junit.jupiter:junit-jupiter'
+	}
+
+	dependencyManagement {
+		imports {
+			mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		}
+	}
+
+	tasks.named('test') {
+		useJUnitPlatform()
+		finalizedBy jacocoTestReport
+	}
+
+	check.dependsOn jacocoTestCoverageVerification

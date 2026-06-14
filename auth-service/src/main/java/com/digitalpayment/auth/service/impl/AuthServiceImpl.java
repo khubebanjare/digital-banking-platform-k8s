@@ -10,6 +10,9 @@ import com.digitalpayment.auth.exception.InvalidCredentialsException;
 import com.digitalpayment.auth.repository.UserRepository;
 import com.digitalpayment.auth.service.IAuthService;
 import com.digitalpayment.auth.util.JwtUtil;
+import com.digitalpayment.auth.metrics.AuthMetrics;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,64 +31,123 @@ public class AuthServiceImpl implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final AuthMetrics authMetrics;
+    private final ObservationRegistry observationRegistry;
     
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            log.warn("Registration attempt with existing email: {}", request.getEmail());
-            throw new DuplicateEmailException("Email already registered: " + request.getEmail());
-        }
-        
-        User user = new User();
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        
-        user = userRepository.save(user);
-        log.info("User registered successfully with ID: {}", user.getId());
+        return Observation.createNotStarted(
+                "auth.register",
+                observationRegistry
+        ).observe(() -> {
 
-        String token = jwtUtil.generateToken(user.getEmail());
-        
-        return new AuthResponse(token, "Bearer", user.getId(), user.getEmail(), 
-                user.getFirstName(), user.getLastName());
+            if (userRepository.existsByEmail(request.getEmail())) {
+                log.warn("Registration attempt with existing email: {}", request.getEmail());
+                throw new DuplicateEmailException("Email already registered: " + request.getEmail());
+            }
+
+            User user = new User();
+            user.setFirstName(request.getFirstName());
+            user.setLastName(request.getLastName());
+            user.setEmail(request.getEmail());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+            user = userRepository.save(user);
+
+            authMetrics.getRegistrationSuccessCounter().increment();
+
+            log.info("User registered successfully with ID: {}", user.getId());
+
+            String token = jwtUtil.generateToken(user.getEmail());
+
+            return new AuthResponse(
+                    token,
+                    "Bearer",
+                    user.getId(),
+                    user.getEmail(),
+                    user.getFirstName(),
+                    user.getLastName()
+            );
+        });
     }
     
     @Override
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        try {
-            log.info("Login attempt for email: {}", request.getEmail());
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
-            
-            User user = (User) authentication.getPrincipal();
-            if (user == null) {
-                log.error("Authentication succeeded but principal is null for email: {}", request.getEmail());
-                throw new InvalidCredentialsException("Invalid credentials");
+        return Observation.createNotStarted(
+                "auth.login",
+                observationRegistry
+        ).observe(() -> {
+
+            try {
+
+                log.info("Login attempt for email: {}", request.getEmail());
+
+                Authentication authentication =
+                        authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(
+                                        request.getEmail(),
+                                        request.getPassword()
+                                )
+                        );
+
+                User user = (User) authentication.getPrincipal();
+
+                if (user == null) {
+                    authMetrics.getLoginFailureCounter().increment();
+
+                    throw new InvalidCredentialsException(
+                            "Invalid credentials"
+                    );
+                }
+
+                String token = jwtUtil.generateToken(user.getEmail());
+
+                authMetrics.getLoginSuccessCounter().increment();
+
+                log.info(
+                        "User logged in successfully with email: {}",
+                        user.getEmail()
+                );
+
+                return new AuthResponse(
+                        token,
+                        "Bearer",
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName()
+                );
+
+            } catch (org.springframework.security.authentication.BadCredentialsException e) {
+
+                authMetrics.getLoginFailureCounter().increment();
+
+                log.warn(
+                        "Failed login attempt for email: {}",
+                        request.getEmail()
+                );
+
+                throw new InvalidCredentialsException(
+                        "Invalid email or password"
+                );
+
+            } catch (Exception e) {
+
+                authMetrics.getLoginFailureCounter().increment();
+
+                log.error(
+                        "Unexpected error during login for email: {}",
+                        request.getEmail(),
+                        e
+                );
+
+                throw new AuthenticationException(
+                        "Login failed due to server error",
+                        e
+                );
             }
-            
-            String token = jwtUtil.generateToken(user.getEmail());
-            log.info("User logged in successfully with email: {}", user.getEmail());
-            return new AuthResponse(token, "Bearer", user.getId(), user.getEmail(),
-                    user.getFirstName(), user.getLastName());
-                    
-        } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            log.warn("Failed login attempt for email: {} - Invalid credentials", request.getEmail());
-            throw new InvalidCredentialsException("Invalid email or password");
-        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
-            log.warn("Failed login attempt for email: {} - User not found", request.getEmail());
-            throw new InvalidCredentialsException("User not found");
-        } catch (InvalidCredentialsException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Unexpected error during login for email: {}", request.getEmail(), e);
-            throw new AuthenticationException("Login failed due to server error", e);
-        }
+        });
     }
 }

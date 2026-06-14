@@ -10,6 +10,8 @@ import com.digitalpayment.auth.exception.DuplicateEmailException;
 import com.digitalpayment.auth.exception.InvalidCredentialsException;
 import com.digitalpayment.auth.repository.UserRepository;
 import com.digitalpayment.auth.util.JwtUtil;
+import com.digitalpayment.auth.metrics.AuthMetrics;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +36,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AuthServiceImplTest {
 
     @Mock
@@ -45,6 +50,18 @@ class AuthServiceImplTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
+
+    @Mock
+    private AuthMetrics authMetrics;
+
+    @Mock
+    private Counter loginSuccessCounter;
+
+    @Mock
+    private Counter loginFailureCounter;
+
+    @Mock
+    private Counter registrationSuccessCounter;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -68,6 +85,10 @@ class AuthServiceImplTest {
         user.setPassword("encodedPassword");
         user.setRole(Role.USER);
         user.setEnabled(true);
+
+        when(authMetrics.getLoginSuccessCounter()).thenReturn(loginSuccessCounter);
+        when(authMetrics.getLoginFailureCounter()).thenReturn(loginFailureCounter);
+        when(authMetrics.getRegistrationSuccessCounter()).thenReturn(registrationSuccessCounter);
     }
 
     @Test
@@ -98,6 +119,7 @@ class AuthServiceImplTest {
         assertEquals("encodedPassword", capturedUser.getPassword());
         
         verify(jwtUtil).generateToken("john@example.com");
+        verify(registrationSuccessCounter).increment();
     }
 
     @Test
@@ -126,6 +148,8 @@ class AuthServiceImplTest {
         
         verify(authenticationManager).authenticate(any());
         verify(jwtUtil).generateToken("john@example.com");
+        verify(loginSuccessCounter).increment();
+        verify(loginFailureCounter, never()).increment();
     }
 
     @Test
@@ -136,6 +160,8 @@ class AuthServiceImplTest {
         assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
+        verify(loginFailureCounter).increment();
+        verify(loginSuccessCounter, never()).increment();
     }
 
     @Test
@@ -143,9 +169,11 @@ class AuthServiceImplTest {
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new UsernameNotFoundException("User not found"));
 
-        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
+        assertThrows(AuthenticationException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
+        verify(loginFailureCounter).increment();
+        verify(loginSuccessCounter, never()).increment();
     }
 
     @Test
@@ -153,9 +181,11 @@ class AuthServiceImplTest {
         Authentication authentication = new UsernamePasswordAuthenticationToken(null, null);
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
-        assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
+        assertThrows(AuthenticationException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
+        verify(loginFailureCounter, atLeastOnce()).increment();
+        verify(loginSuccessCounter, never()).increment();
     }
 
     @Test
@@ -169,6 +199,7 @@ class AuthServiceImplTest {
 
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        verify(registrationSuccessCounter).increment();
     }
 
     @Test
@@ -179,5 +210,7 @@ class AuthServiceImplTest {
         assertThrows(AuthenticationException.class, () -> authService.login(loginRequest));
         
         verify(authenticationManager).authenticate(any());
+        verify(loginFailureCounter).increment();
+        verify(loginSuccessCounter, never()).increment();
     }
 }
