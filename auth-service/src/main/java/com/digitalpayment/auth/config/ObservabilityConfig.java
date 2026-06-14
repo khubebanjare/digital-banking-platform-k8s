@@ -8,12 +8,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ObservabilityConfig {
 
-    @Bean
-    MeterRegistryCustomizer<MeterRegistry> commonTags() {
-        return registry -> registry.config()
-                .commonTags(
-                        "service", "auth-service",
-                        "team", "banking"
-                );
-    }
+  @Bean
+  MeterRegistryCustomizer<MeterRegistry> commonTags() {
+    return registry ->
+        registry
+            .config()
+            .commonTags(
+                "service", "auth-service",
+                "team", "banking");
+  }
 }

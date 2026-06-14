@@ -25,48 +25,49 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 @Slf4j
 public class SecurityConfig {
-    
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsService userDetailsService;
-    
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        log.info("Configuring security filter chain");
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/actuator/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
-        SecurityFilterChain chain = http.build();
-        log.info("Security filter chain configured successfully");
-        return chain;
-    }
-    
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        log.info("Configuring authentication provider");
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        log.info("Authentication provider configured successfully");
-        return authProvider;
-    }
-    
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        log.info("Configuring authentication manager");
-        return config.getAuthenticationManager();
-    }
-    
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        log.info("Configuring BCrypt password encoder");
-        return new BCryptPasswordEncoder();
-    }
+
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final UserDetailsService userDetailsService;
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    log.info("Configuring security filter chain");
+    http.csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers("/api/auth/**", "/actuator/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authenticationProvider(authenticationProvider())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+    SecurityFilterChain chain = http.build();
+    log.info("Security filter chain configured successfully");
+    return chain;
+  }
+
+  @Bean
+  public AuthenticationProvider authenticationProvider() {
+    log.info("Configuring authentication provider");
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+    authProvider.setPasswordEncoder(passwordEncoder());
+    log.info("Authentication provider configured successfully");
+    return authProvider;
+  }
+
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+      throws Exception {
+    log.info("Configuring authentication manager");
+    return config.getAuthenticationManager();
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    log.info("Configuring BCrypt password encoder");
+    return new BCryptPasswordEncoder();
+  }
 }

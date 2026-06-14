@@ -10,16 +10,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class StartupCheck {
 
-    @PostConstruct
-    public void init() {
-        log.info("Performing startup checks...");
+  @PostConstruct
+  public void init() {
+    log.info("Performing startup checks...");
 
-        try {
-            Thread.sleep(2000);
-            log.info("Startup checks completed successfully.");
-        } catch (InterruptedException e) {
-            log.error("Startup checks interrupted", e);
-            Thread.currentThread().interrupt();
-        }
+    try {
+      Thread.sleep(2000);
+      log.info("Startup checks completed successfully.");
+    } catch (InterruptedException e) {
+      log.error("Startup checks interrupted", e);
+      Thread.currentThread().interrupt();
     }
+  }
 }

@@ -13,17 +13,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
-    
-    private final UserRepository userRepository;
-    
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        log.debug("Loading user by email: {}", email);
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    log.warn("User not found with email: {}", email);
-                    return new UsernameNotFoundException("User not found with email: " + email);
-                });
-    }
+
+  private final UserRepository userRepository;
+
+  @Override
+  @Transactional(readOnly = true)
+  public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    log.debug("Loading user by email: {}", email);
+    return userRepository
+        .findByEmail(email)
+        .orElseThrow(
+            () -> {
+              log.warn("User not found with email: {}", email);
+              return new UsernameNotFoundException("User not found with email: " + email);
+            });
+  }
 }

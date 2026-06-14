@@ -5,6 +5,7 @@ import com.digitalpayment.auth.dto.LoginRequest;
 import com.digitalpayment.auth.dto.RegisterRequest;
 
 public interface IAuthService {
-    AuthResponse register(RegisterRequest request);
-    AuthResponse login(LoginRequest request);
+  AuthResponse register(RegisterRequest request);
+
+  AuthResponse login(LoginRequest request);
 }

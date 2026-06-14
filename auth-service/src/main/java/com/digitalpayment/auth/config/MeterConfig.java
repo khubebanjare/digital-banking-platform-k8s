@@ -8,12 +8,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MeterConfig {
 
-    @Bean
-    MeterRegistryCustomizer<MeterRegistry> metricsCommonTags() {
-        return registry -> registry.config()
-                .commonTags(
-                        "service", "auth-service",
-                        "environment", "k8s-local"
-                );
-    }
+  @Bean
+  MeterRegistryCustomizer<MeterRegistry> metricsCommonTags() {
+    return registry ->
+        registry
+            .config()
+            .commonTags(
+                "service", "auth-service",
+                "environment", "k8s-local");
+  }
 }

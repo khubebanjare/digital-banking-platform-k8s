@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "jwt")
 public class VaultProperties {
-    private String secret;
+  private String secret;
 
-    @PostConstruct
-    public void init(){
-        log.info("VaultProperties initialized with secret: {}", secret);
-    }
+  @PostConstruct
+  public void init() {
+    log.info("VaultProperties initialized with secret: {}", secret);
+  }
 }
