@@ -59,6 +59,8 @@
           condition: service_healthy
         config-server:
           condition: service_healthy
+        otel-collector:
+          condition: service_started
 
       container_name: auth-service
 
@@ -68,16 +70,83 @@
       environment:
         SPRING_PROFILES_ACTIVE: docker
         SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
+        OTEL_SERVICE_NAME: auth-service
+        OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+        OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+        JAVA_TOOL_OPTIONS: javaagent:/app/opentelemetry-javaagent.jar
 
       networks:
         - digital-payment-network
 
 
+    otel-collector:
+      image: otel/opentelemetry-collector-contrib:latest
+      container_name: otel-collector
+
+      command:
+        - "--config=/etc/otelcol/config.yaml"
+
+      ports:
+        - "4317:4317"
+        - "4318:4318"
+
+      volumes:
+        - ./otel-collector-config.yaml:/etc/otelcol/config.yaml
+
+      restart: unless-stopped
+
+      networks:
+        - digital-payment-network
+
+
+#    api-gateway:
+#      build:
+#        context: ../../api-gateway
+#
+#      depends_on:
+#        config-server:
+#          condition: service_healthy
+#
+#      container_name: api-gateway
+#
+#      ports:
+#        - "8080:8080"
+#
+#      environment:
+#        SPRING_PROFILES_ACTIVE: docker
+#        SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
+#
+#      networks:
+#        - digital-payment-network
+#
+#
+#    wallet-service:
+#      build:
+#        context: ../../wallet-service
+#
+#      depends_on:
+#        postgres:
+#          condition: service_healthy
+#        config-server:
+#          condition: service_healthy
+#
+#      container_name: wallet-service
+#
+#      ports:
+#        - "8082:8080"
+#
+#      environment:
+#        SPRING_PROFILES_ACTIVE: docker
+#        SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
+#
+#      networks:
+#        - digital-payment-network
+
 
   networks:
     digital-payment-network:
       driver: bridge
-
 
 
   volumes:

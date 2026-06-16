@@ -23,10 +23,3 @@ spring:
 
   profiles:
     active: k8s.local
-
-grafana:
-  otlp:
-    cloud:
-      zone: aps1-az1, aps1-az3
-      instance-id: 1682323
-      api-key: ${GRAFANA_AUTH_TOKEN}
