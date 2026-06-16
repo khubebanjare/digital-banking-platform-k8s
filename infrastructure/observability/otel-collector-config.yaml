@@ -35,3 +35,6 @@ service:
     traces:
       receivers: [otlp]
       exporters: [otlp/tempo]
+
+limits_config:
+  allow_structured_metadata: true
