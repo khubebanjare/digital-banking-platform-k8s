@@ -80,7 +80,7 @@ class SecurityConfigTest {
   }
 
   @Test
-  void testAuthenticationManagerBeanCreation() throws Exception {
+  void testAuthenticationManagerBeanCreation() {
     when(authenticationConfiguration.getAuthenticationManager()).thenReturn(authenticationManager);
 
     AuthenticationManager manager =
@@ -91,7 +91,7 @@ class SecurityConfigTest {
   }
 
   @Test
-  void testAuthenticationManagerReturnsCorrectManager() throws Exception {
+  void testAuthenticationManagerReturnsCorrectManager() {
     when(authenticationConfiguration.getAuthenticationManager()).thenReturn(authenticationManager);
 
     AuthenticationManager manager =
@@ -126,7 +126,7 @@ class SecurityConfigTest {
   }
 
   @Test
-  void testSecurityFilterChainBeanCreation() throws Exception {
+  void testSecurityFilterChainBeanCreation() {
     when(httpSecurity.csrf(any())).thenReturn(httpSecurity);
     when(httpSecurity.authorizeHttpRequests(any())).thenReturn(httpSecurity);
     when(httpSecurity.sessionManagement(any())).thenReturn(httpSecurity);

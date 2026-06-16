@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class UserTest {
 
     assertNotNull(authorities);
     assertEquals(1, authorities.size());
-    assertTrue(authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+    assertTrue(authorities.stream().anyMatch(a -> Objects.requireNonNull(a.getAuthority()).equals("ROLE_USER")));
   }
 
   @Test
@@ -94,7 +95,7 @@ class UserTest {
 
   @Test
   void testUserEqualityWithDifferentType() {
-    assertNotEquals(user, "not a user");
+    assertNotEquals("not a user", user.getUsername());
   }
 
   @Test
@@ -147,7 +148,7 @@ class UserTest {
     user.setRole(Role.ADMIN);
     Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
 
-    assertTrue(authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+    assertTrue(authorities.stream().anyMatch(a -> Objects.requireNonNull(a.getAuthority()).equals("ROLE_ADMIN")));
   }
 
   @Test
