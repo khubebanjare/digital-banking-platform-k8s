@@ -48,7 +48,9 @@ class UserTest {
 
     assertNotNull(authorities);
     assertEquals(1, authorities.size());
-    assertTrue(authorities.stream().anyMatch(a -> Objects.requireNonNull(a.getAuthority()).equals("ROLE_USER")));
+    assertTrue(
+        authorities.stream()
+            .anyMatch(a -> Objects.requireNonNull(a.getAuthority()).equals("ROLE_USER")));
   }
 
   @Test
@@ -148,7 +150,9 @@ class UserTest {
     user.setRole(Role.ADMIN);
     Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
 
-    assertTrue(authorities.stream().anyMatch(a -> Objects.requireNonNull(a.getAuthority()).equals("ROLE_ADMIN")));
+    assertTrue(
+        authorities.stream()
+            .anyMatch(a -> Objects.requireNonNull(a.getAuthority()).equals("ROLE_ADMIN")));
   }
 
   @Test
