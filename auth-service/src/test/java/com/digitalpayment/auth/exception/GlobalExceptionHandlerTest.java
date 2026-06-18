@@ -146,4 +146,44 @@ class GlobalExceptionHandlerTest {
     assertEquals(500, response.getBody().getStatus());
     assertEquals("Internal Server Error", response.getBody().getError());
   }
+
+  @Test
+  void testHandleInvalidCredentialsException() {
+    InvalidCredentialsException ex = new InvalidCredentialsException("Invalid credentials");
+
+    ResponseEntity<ErrorResponse> response =
+        globalExceptionHandler.handleGlobalException(ex, webRequest);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals(500, response.getBody().getStatus());
+    assertEquals("Invalid credentials", response.getBody().getMessage());
+  }
+
+  @Test
+  void testHandleAuthenticationException() {
+    AuthenticationException ex = new AuthenticationException("Authentication failed");
+
+    ResponseEntity<ErrorResponse> response =
+        globalExceptionHandler.handleGlobalException(ex, webRequest);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals(500, response.getBody().getStatus());
+    assertEquals("Authentication failed", response.getBody().getMessage());
+  }
+
+  @Test
+  void testHandleAuthenticationExceptionWithCause() {
+    Throwable cause = new RuntimeException("Root cause");
+    AuthenticationException ex = new AuthenticationException("Authentication failed", cause);
+
+    ResponseEntity<ErrorResponse> response =
+        globalExceptionHandler.handleGlobalException(ex, webRequest);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals(500, response.getBody().getStatus());
+    assertEquals("Authentication failed", response.getBody().getMessage());
+  }
 }

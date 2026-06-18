@@ -1,19 +1,13 @@
 package com.digitalpayment.auth.dto;
 
+import com.digitalpayment.auth.entity.Role;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class AuthResponse {
-
-  private String token;
-  private String tokenType = "Bearer";
-  private UUID id;
-  private String email;
-  private String firstName;
-  private String lastName;
-}
+public record AuthResponse(
+    String accessToken,
+    String refreshToken,
+    String tokenType,
+    Long expiresIn,
+    UUID userId,
+    String email,
+    Role role) {}

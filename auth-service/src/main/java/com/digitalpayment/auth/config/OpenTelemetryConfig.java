@@ -30,7 +30,7 @@ public class OpenTelemetryConfig {
 
     OtlpHttpLogRecordExporter logExporter =
         OtlpHttpLogRecordExporter.builder()
-            .setEndpoint(otlpEndpoint + "/v1/logs") // ← HTTP needs the /v1/logs path
+            .setEndpoint(otlpEndpoint + "/v1/logs")
             .addHeader("Authorization", otlpAuth)
             .build();
 
@@ -43,7 +43,6 @@ public class OpenTelemetryConfig {
     OpenTelemetrySdk sdk =
         OpenTelemetrySdk.builder().setLoggerProvider(loggerProvider).buildAndRegisterGlobal();
 
-    // Wire the logback appender to this SDK instance
     OpenTelemetryAppender.install(sdk);
 
     return sdk;
