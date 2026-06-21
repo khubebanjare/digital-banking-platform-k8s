@@ -3,16 +3,10 @@ package com.digitalpayment.auth.service.impl;
 import com.digitalpayment.auth.config.JwtProperties;
 import com.digitalpayment.auth.constants.AuthConstants;
 import com.digitalpayment.auth.dto.*;
-import com.digitalpayment.auth.entity.OtpToken;
-import com.digitalpayment.auth.entity.PasswordResetToken;
-import com.digitalpayment.auth.entity.RefreshToken;
-import com.digitalpayment.auth.entity.User;
+import com.digitalpayment.auth.entity.*;
 import com.digitalpayment.auth.exception.*;
 import com.digitalpayment.auth.metrics.AuthMetrics;
-import com.digitalpayment.auth.repository.OtpTokenRepository;
-import com.digitalpayment.auth.repository.PasswordResetTokenRepository;
-import com.digitalpayment.auth.repository.RefreshTokenRepository;
-import com.digitalpayment.auth.repository.UserRepository;
+import com.digitalpayment.auth.repository.*;
 import com.digitalpayment.auth.service.EmailService;
 import com.digitalpayment.auth.service.IAuthService;
 import com.digitalpayment.auth.service.RefreshTokenService;
@@ -20,7 +14,10 @@ import com.digitalpayment.auth.util.JwtUtil;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import jakarta.mail.MessagingException;
+import java.io.UnsupportedEncodingException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -51,6 +48,7 @@ public class AuthServiceImpl implements IAuthService {
   private final PasswordResetTokenRepository passwordResetTokenRepository;
   private final EmailService emailService;
   private final OtpTokenRepository otpTokenRepository;
+  private final EmailVerificationTokenRepository emailVerificationTokenRepository;
 
   @Override
   @Transactional
@@ -72,6 +70,29 @@ public class AuthServiceImpl implements IAuthService {
 
               user = userRepository.save(user);
 
+              String verificationToken = UUID.randomUUID().toString();
+
+              emailVerificationTokenRepository.deleteByUser(user);
+
+              EmailVerificationToken emailToken =
+                  EmailVerificationToken.builder()
+                      .token(verificationToken)
+                      .expiryDate(Instant.now().plus(24, ChronoUnit.HOURS))
+                      .user(user)
+                      .build();
+
+              emailVerificationTokenRepository.save(emailToken);
+
+              String verificationLink =
+                  "http://localhost:8081/api/v1/auth/verify-email?token=" + verificationToken;
+
+              try {
+                emailService.sendVerificationEmail(user.getEmail(), verificationLink);
+
+              } catch (MessagingException | UnsupportedEncodingException e) {
+                throw new EmailSendingException("Failed to send verification email", e);
+              }
+
               authMetrics.getRegistrationSuccessCounter().increment();
 
               log.info("User registered successfully with ID: {}", user.getId());
@@ -89,6 +110,32 @@ public class AuthServiceImpl implements IAuthService {
                   user.getEmail(),
                   user.getRole());
             });
+  }
+
+  @Override
+  @Transactional
+  public void verifyEmail(String tokenValue) {
+    log.info("Email verification request received for token: {}", tokenValue);
+    EmailVerificationToken token =
+        emailVerificationTokenRepository
+            .findByToken(tokenValue)
+            .orElseThrow(() -> new AuthenticationException("Invalid verification token"));
+
+    if (token.getExpiryDate().isBefore(Instant.now())) {
+
+      throw new AuthenticationException("Verification token expired");
+    }
+
+    User user = token.getUser();
+
+    user.setEmailVerified(true);
+
+    user.setEnabled(true);
+
+    userRepository.save(user);
+
+    emailVerificationTokenRepository.delete(token);
+    log.info("Email verified successfully for user: {}", user.getEmail());
   }
 
   @Override
@@ -202,22 +249,16 @@ public class AuthServiceImpl implements IAuthService {
   @Transactional
   @Override
   public void changePassword(ChangePasswordRequest request) {
-    log.info("Change password request received");
     String email =
         Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
-
-    User user =
-        userRepository
-            .findByEmail(email)
-            .orElseThrow(() -> new AuthenticationException(AuthConstants.USER_NOT_FOUND));
+    log.info("Change password request received for user: {}", email);
+    User user = getUser(email);
 
     if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
-
       throw new AuthenticationException("Current password is incorrect");
     }
 
     if (!request.newPassword().equals(request.confirmPassword())) {
-
       throw new AuthenticationException("Passwords do not match");
     }
 
@@ -226,16 +267,14 @@ public class AuthServiceImpl implements IAuthService {
     userRepository.save(user);
 
     refreshTokenService.deleteByUser(user);
+    log.info("Password changed successfully for user: {}", email);
   }
 
   @Override
   @Transactional
   public void forgotPassword(ForgotPasswordRequest request) {
-
-    User user =
-        userRepository
-            .findByEmail(request.email())
-            .orElseThrow(() -> new AuthenticationException(AuthConstants.USER_NOT_FOUND));
+    log.info("Forgot password request received for email: {}", request.email());
+    User user = getUser(request.email());
 
     passwordResetTokenRepository.deleteByUser(user);
     passwordResetTokenRepository.flush();
@@ -252,35 +291,32 @@ public class AuthServiceImpl implements IAuthService {
     PasswordResetToken saved = passwordResetTokenRepository.save(resetToken);
 
     log.info("Password reset token saved: {}", saved.getToken());
-
     String resetLink = "http://localhost:8081/api/v1/auth/reset-password?token=" + token;
 
     try {
       emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
-
-    } catch (MessagingException e) {
-
+    } catch (MessagingException | UnsupportedEncodingException e) {
+      log.error("Failed to send password reset email to: {}", user.getEmail(), e);
       throw new EmailSendingException("Failed to send password reset email", e);
     }
+    log.info("Password reset email sent successfully to: {}", user.getEmail());
   }
 
   @Override
   @Transactional
   public void resetPassword(ResetPasswordRequest request) {
+    log.info("Reset password request received for token: {}", request.token());
     PasswordResetToken resetToken =
         passwordResetTokenRepository
             .findByToken(request.token())
             .orElseThrow(() -> new AuthenticationException("Invalid token"));
 
     if (resetToken.getExpiryDate().isBefore(Instant.now())) {
-
       passwordResetTokenRepository.delete(resetToken);
-
       throw new AuthenticationException("Token expired");
     }
 
     if (!request.newPassword().equals(request.confirmPassword())) {
-
       throw new AuthenticationException("Passwords do not match");
     }
 
@@ -293,16 +329,14 @@ public class AuthServiceImpl implements IAuthService {
     passwordResetTokenRepository.delete(resetToken);
 
     refreshTokenService.deleteByUser(user);
+    log.info("Password reset successfully for user: {}", user.getEmail());
   }
 
   @Override
   @Transactional
   public void sendOtp(SendOtpRequest request) {
-
-    User user =
-        userRepository
-            .findByEmail(request.email())
-            .orElseThrow(() -> new AuthenticationException(AuthConstants.USER_NOT_FOUND));
+    log.info("Send OTP request received for email: {}", request.email());
+    User user = getUser(request.email());
 
     otpTokenRepository.deleteByUser(user);
 
@@ -318,46 +352,211 @@ public class AuthServiceImpl implements IAuthService {
 
     otpTokenRepository.save(otpToken);
 
-    try {
-      emailService.sendOtpEmail(user.getEmail(), otp);
-    } catch (MessagingException e) {
-      throw new OtpEmailSendingException("Failed to send OTP email", e);
-    }
+    sendOptEmail(user, otp);
   }
 
   @Override
   @Transactional
   public void verifyOtp(VerifyOtpRequest request) {
+    log.info("Verify OTP request received for email: {}", request.email());
+    User user = getUser(request.email());
 
-    User user =
-        userRepository
-            .findByEmail(request.email())
-            .orElseThrow(() -> new AuthenticationException(AuthConstants.USER_NOT_FOUND));
-
-    OtpToken otpToken =
-        otpTokenRepository
-            .findByUser(user)
-            .orElseThrow(() -> new AuthenticationException("OTP not found"));
+    OtpToken otpToken = getOtpToken(user);
 
     if (otpToken.getExpiryDate().isBefore(Instant.now())) {
-
       otpTokenRepository.delete(otpToken);
-
       throw new AuthenticationException("OTP expired");
     }
 
     if (!otpToken.getOtp().equals(request.otp())) {
-
       throw new AuthenticationException("Invalid OTP");
     }
 
     otpToken.setVerified(true);
 
     otpTokenRepository.save(otpToken);
+    log.info("OTP verified successfully for user: {}", user.getEmail());
+  }
+
+  @Override
+  @Transactional
+  public void enableMfa(EnableMfaRequest request) {
+    log.info("Enable MFA request received for email: {}", request.email());
+    User user = getUser(request.email());
+
+    OtpToken otpToken = getOtpToken(user);
+
+    if (otpToken.getExpiryDate().isBefore(Instant.now())) {
+      throw new AuthenticationException("OTP expired");
+    }
+
+    if (!otpToken.getOtp().equals(request.otp())) {
+      throw new AuthenticationException("Invalid OTP");
+    }
+
+    user.setMfaEnabled(true);
+
+    userRepository.save(user);
+
+    otpTokenRepository.delete(otpToken);
+    log.info("MFA enabled successfully for user: {}", user.getEmail());
+  }
+
+  @Override
+  @Transactional
+  public void disableMfa(DisableMfaRequest request) {
+    log.info("Disable MFA request received for email: {}", request.email());
+    User user = getUser(request.email());
+
+    OtpToken otpToken = getOtpToken(user);
+
+    if (otpToken.getExpiryDate().isBefore(Instant.now())) {
+      throw new AuthenticationException("OTP expired");
+    }
+
+    if (!otpToken.getOtp().equals(request.otp())) {
+      throw new AuthenticationException("Invalid OTP");
+    }
+
+    user.setMfaEnabled(false);
+
+    userRepository.save(user);
+
+    otpTokenRepository.delete(otpToken);
+    log.info("MFA disabled successfully for user: {}", user.getEmail());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<SessionResponse> getSessions(String email) {
+    log.info("Get sessions request received for email: {}", email);
+    User user = getUser(email);
+
+    List<SessionResponse> sessions =
+        refreshTokenRepository.findAllByUser(user).stream()
+            .map(
+                token ->
+                    new SessionResponse(token.getId(), token.getToken(), token.getExpiryDate()))
+            .toList();
+    log.info("Retrieved {} sessions for user: {}", sessions.size(), email);
+    return sessions;
+  }
+
+  @Override
+  @Transactional
+  public void deleteSession(Long sessionId, String email) {
+    log.info("Delete session request received for session ID: {} and email: {}", sessionId, email);
+    User user = getUser(email);
+
+    RefreshToken refreshToken =
+        refreshTokenRepository
+            .findById(sessionId)
+            .orElseThrow(() -> new AuthenticationException("Session not found"));
+
+    if (!refreshToken.getUser().getId().equals(user.getId())) {
+      throw new AuthenticationException("Unauthorized session access");
+    }
+
+    refreshTokenRepository.delete(refreshToken);
+    log.info("Session deleted successfully for session ID: {}", sessionId);
+  }
+
+  @Override
+  @Transactional
+  public void sendLoginOtp(SendLoginOtpRequest request) {
+    User user = getUser(request.email());
+    if (!user.isEnabled()) {
+      throw new AuthenticationException("Email is not verified");
+    }
+
+    otpTokenRepository.deleteByUser(user);
+
+    String otp = generateOtp();
+
+    OtpToken otpToken = generateOtpToken(user, otp);
+
+    otpTokenRepository.save(otpToken);
+
+    sendOptEmail(user, otp);
+  }
+
+  @Override
+  @Transactional
+  public AuthResponse verifyLoginOtp(VerifyLoginOtpRequest request) {
+    User user = getUser(request.email());
+
+    OtpToken otpToken = getOtpToken(user);
+
+    if (otpToken.getExpiryDate().isBefore(Instant.now())) {
+      throw new AuthenticationException("OTP expired");
+    }
+
+    if (!otpToken.getOtp().equals(request.otp())) {
+      throw new AuthenticationException("Invalid OTP");
+    }
+
+    otpTokenRepository.delete(otpToken);
+
+    String accessToken = jwtUtil.generateToken(user.getEmail());
+
+    RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+    return new AuthResponse(
+        accessToken,
+        refreshToken.getToken(),
+        "Bearer",
+        jwtProperties.getExpiration(),
+        user.getId(),
+        user.getEmail(),
+        user.getRole());
+  }
+
+  @Override
+  @Transactional
+  public void resendLoginOtp(ResendLoginOtpRequest request) {
+    User user = getUser(request.email());
+
+    if (!user.isEnabled()) {
+      throw new AuthenticationException("Email is not verified");
+    }
+
+    otpTokenRepository.deleteByUser(user);
+    String otp = generateOtp();
+    OtpToken otpToken = generateOtpToken(user, otp);
+    otpTokenRepository.save(otpToken);
+    sendOptEmail(user, otp);
   }
 
   private String generateOtp() {
-
     return String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+  }
+
+  private OtpToken generateOtpToken(User user, String otp) {
+    return OtpToken.builder()
+        .otp(otp)
+        .user(user)
+        .expiryDate(Instant.now().plus(5, ChronoUnit.MINUTES))
+        .build();
+  }
+
+  private OtpToken getOtpToken(User user) {
+    return otpTokenRepository
+        .findByUser(user)
+        .orElseThrow(() -> new AuthenticationException("OTP not found"));
+  }
+
+  private User getUser(String email) {
+    return userRepository
+        .findByEmail(email)
+        .orElseThrow(() -> new AuthenticationException(AuthConstants.USER_NOT_FOUND));
+  }
+
+  private void sendOptEmail(User user, String otp) {
+    try {
+      emailService.sendOtpEmail(user.getEmail(), otp);
+    } catch (MessagingException | UnsupportedEncodingException e) {
+      throw new EmailSendingException("Failed to send OTP email", e);
+    }
+    log.info("OTP sent successfully to: {}", user.getEmail());
   }
 }

@@ -2,10 +2,13 @@ package com.digitalpayment.auth.service;
 
 import com.digitalpayment.auth.dto.*;
 import jakarta.validation.Valid;
+import java.util.List;
 
 public interface IAuthService {
 
   AuthResponse register(@Valid RegisterRequest request);
+
+  void verifyEmail(String tokenValue);
 
   AuthResponse login(@Valid LoginRequest request);
 
@@ -24,4 +27,18 @@ public interface IAuthService {
   void sendOtp(@Valid SendOtpRequest request);
 
   void verifyOtp(VerifyOtpRequest request);
+
+  void enableMfa(EnableMfaRequest request);
+
+  void disableMfa(DisableMfaRequest request);
+
+  List<SessionResponse> getSessions(String email);
+
+  void deleteSession(Long sessionId, String email);
+
+  void sendLoginOtp(SendLoginOtpRequest request);
+
+  AuthResponse verifyLoginOtp(VerifyLoginOtpRequest request);
+
+  void resendLoginOtp(ResendLoginOtpRequest request);
 }

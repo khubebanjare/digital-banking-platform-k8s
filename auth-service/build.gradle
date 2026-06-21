@@ -145,6 +145,7 @@ dependencyCheck {
 	tasks.named('test') {
 		useJUnitPlatform()
 		finalizedBy jacocoTestReport
+		dependsOn("pitest")
 	}
 
 	check.dependsOn jacocoTestCoverageVerification

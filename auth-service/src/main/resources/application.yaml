@@ -1,6 +1,10 @@
 spring:
   application:
     name: auth-service
+  mail:
+    properties:
+      mail:
+        debug: true
 
   config:
     import:

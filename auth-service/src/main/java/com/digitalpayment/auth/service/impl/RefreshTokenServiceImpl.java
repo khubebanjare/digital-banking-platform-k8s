@@ -77,12 +77,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @Override
   @Transactional
   public void revokeToken(String token) {
-
+    log.info("Revoke token request received for token: {}", token);
     RefreshToken refreshToken =
         refreshTokenRepository
             .findByToken(token)
             .orElseThrow(() -> new AuthenticationException("Invalid refresh token"));
 
     refreshTokenRepository.delete(refreshToken);
+    log.info("Token revoked successfully");
   }
 }

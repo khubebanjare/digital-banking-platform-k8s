@@ -10,6 +10,7 @@ import com.digitalpayment.auth.dto.*;
 import com.digitalpayment.auth.entity.*;
 import com.digitalpayment.auth.exception.*;
 import com.digitalpayment.auth.metrics.AuthMetrics;
+import com.digitalpayment.auth.repository.EmailVerificationTokenRepository;
 import com.digitalpayment.auth.repository.OtpTokenRepository;
 import com.digitalpayment.auth.repository.PasswordResetTokenRepository;
 import com.digitalpayment.auth.repository.RefreshTokenRepository;
@@ -21,6 +22,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import jakarta.mail.MessagingException;
+import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -73,6 +75,8 @@ class AuthServiceImplTest {
   @Mock private EmailService emailService;
 
   @Mock private OtpTokenRepository otpTokenRepository;
+
+  @Mock private EmailVerificationTokenRepository emailVerificationTokenRepository;
 
   @Mock private ObservationRegistry observationRegistry;
 
@@ -149,7 +153,7 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testRegisterSuccess() {
+  void testRegisterSuccess() throws MessagingException, UnsupportedEncodingException {
     User savedUser = new User();
     savedUser.setId(user.getId());
     savedUser.setFirstName("John");
@@ -167,6 +171,11 @@ class AuthServiceImplTest {
     when(userRepository.save(any(User.class))).thenReturn(savedUser);
     when(jwtUtil.generateToken("john@example.com")).thenReturn("jwt-token");
     when(refreshTokenService.createRefreshToken(any(User.class))).thenReturn(refreshToken);
+    lenient().doNothing().when(emailVerificationTokenRepository).deleteByUser(any(User.class));
+    lenient()
+        .when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class)))
+        .thenReturn(EmailVerificationToken.builder().build());
+    lenient().doNothing().when(emailService).sendVerificationEmail(anyString(), anyString());
 
     AuthResponse response = authService.register(registerRequest);
 
@@ -270,7 +279,8 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testRegisterWithSystemOutVerification() {
+  void testRegisterWithSystemOutVerification()
+      throws MessagingException, UnsupportedEncodingException {
     User savedUser = new User();
     savedUser.setId(user.getId());
     savedUser.setFirstName("John");
@@ -288,6 +298,11 @@ class AuthServiceImplTest {
     when(userRepository.save(any(User.class))).thenReturn(savedUser);
     when(jwtUtil.generateToken("john@example.com")).thenReturn("jwt-token");
     when(refreshTokenService.createRefreshToken(any(User.class))).thenReturn(refreshToken);
+    lenient().doNothing().when(emailVerificationTokenRepository).deleteByUser(any(User.class));
+    lenient()
+        .when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class)))
+        .thenReturn(EmailVerificationToken.builder().build());
+    lenient().doNothing().when(emailService).sendVerificationEmail(anyString(), anyString());
 
     AuthResponse response = authService.register(registerRequest);
 
@@ -481,7 +496,7 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testForgotPasswordSuccess() throws MessagingException {
+  void testForgotPasswordSuccess() throws MessagingException, UnsupportedEncodingException {
     ForgotPasswordRequest request = new ForgotPasswordRequest("john@example.com");
     when(userRepository.findByEmail("john@example.com")).thenReturn(java.util.Optional.of(user));
     lenient()
@@ -498,7 +513,7 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testForgotPasswordUserNotFound() {
+  void testForgotPasswordUserNotFound() throws MessagingException, UnsupportedEncodingException {
     ForgotPasswordRequest request = new ForgotPasswordRequest("nonexistent@example.com");
     when(userRepository.findByEmail("nonexistent@example.com"))
         .thenReturn(java.util.Optional.empty());
@@ -515,7 +530,8 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testForgotPasswordEmailSendingFailure() throws MessagingException {
+  void testForgotPasswordEmailSendingFailure()
+      throws MessagingException, UnsupportedEncodingException {
     ForgotPasswordRequest request = new ForgotPasswordRequest("john@example.com");
     when(userRepository.findByEmail("john@example.com")).thenReturn(java.util.Optional.of(user));
     lenient()
@@ -619,7 +635,7 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testSendOtpSuccess() throws MessagingException {
+  void testSendOtpSuccess() throws MessagingException, UnsupportedEncodingException {
     SendOtpRequest request = new SendOtpRequest("john@example.com");
     when(userRepository.findByEmail("john@example.com")).thenReturn(java.util.Optional.of(user));
 
@@ -632,7 +648,7 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testSendOtpUserNotFound() {
+  void testSendOtpUserNotFound() throws MessagingException, UnsupportedEncodingException {
     SendOtpRequest request = new SendOtpRequest("nonexistent@example.com");
     when(userRepository.findByEmail("nonexistent@example.com"))
         .thenReturn(java.util.Optional.empty());
@@ -650,14 +666,14 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testSendOtpEmailSendingFailure() throws MessagingException {
+  void testSendOtpEmailSendingFailure() throws MessagingException, UnsupportedEncodingException {
     SendOtpRequest request = new SendOtpRequest("john@example.com");
     when(userRepository.findByEmail("john@example.com")).thenReturn(java.util.Optional.of(user));
     doThrow(new MessagingException("Email error"))
         .when(emailService)
         .sendOtpEmail(anyString(), anyString());
 
-    assertThrows(OtpEmailSendingException.class, () -> authService.sendOtp(request));
+    assertThrows(EmailSendingException.class, () -> authService.sendOtp(request));
 
     verify(userRepository).findByEmail("john@example.com");
     verify(otpTokenRepository).deleteByUser(user);

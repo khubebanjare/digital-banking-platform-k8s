@@ -59,6 +59,12 @@ public class User implements UserDetails {
   @Column(nullable = false)
   private boolean credentialsNonExpired = true;
 
+  @Column(nullable = false)
+  private boolean mfaEnabled = false;
+
+  @Column(nullable = false)
+  private boolean emailVerified = false;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;

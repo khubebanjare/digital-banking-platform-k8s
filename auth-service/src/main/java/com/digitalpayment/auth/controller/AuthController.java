@@ -6,13 +6,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -37,6 +36,21 @@ public class AuthController {
     return ResponseEntity.ok(response);
   }
 
+  @GetMapping("/verify-email")
+  @Operation(
+      summary = "Verify email",
+      description = "Verifies the user's email address using a verification token")
+  @ApiResponse(responseCode = "200", description = "Email verified successfully")
+  @ApiResponse(responseCode = "400", description = "Invalid request")
+  @ApiResponse(responseCode = "401", description = "Invalid token")
+  @ApiResponse(responseCode = "404", description = "Token not found")
+  public ResponseEntity<String> verifyEmail(@Valid @RequestParam String token) {
+    log.info("Email verification request received for token: {}", token);
+    authService.verifyEmail(token);
+    log.info("Email verification successful");
+    return ResponseEntity.ok("Email verified successfully");
+  }
+
   @PostMapping("/login")
   @Operation(
       summary = "Authenticate user",
@@ -49,6 +63,20 @@ public class AuthController {
     AuthResponse response = authService.login(request);
     log.info("Login successful for email: {}", request.getEmail());
     return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/send-login-otp")
+  public ResponseEntity<Void> sendLoginOtp(@RequestBody SendLoginOtpRequest request) {
+
+    authService.sendLoginOtp(request);
+
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/verify-login-otp")
+  public ResponseEntity<AuthResponse> verifyLoginOtp(@RequestBody VerifyLoginOtpRequest request) {
+
+    return ResponseEntity.ok(authService.verifyLoginOtp(request));
   }
 
   @PostMapping("/refresh-token")
@@ -90,9 +118,9 @@ public class AuthController {
   @ApiResponse(responseCode = "400", description = "Invalid request")
   public ResponseEntity<MessageResponse> revokeToken(
       @Valid @RequestBody RevokeTokenRequest request) {
-
+    log.info("Revoke token request received");
     authService.revokeToken(request);
-
+    log.info("Token revoked successfully");
     return ResponseEntity.ok(new MessageResponse("Token revoked successfully"));
   }
 
@@ -103,8 +131,9 @@ public class AuthController {
   @ApiResponse(responseCode = "400", description = "Invalid request")
   public ResponseEntity<MessageResponse> changePassword(
       @Valid @RequestBody ChangePasswordRequest request) {
+    log.info("Change password request received");
     authService.changePassword(request);
-
+    log.info("Password changed successfully");
     return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
   }
 
@@ -117,11 +146,9 @@ public class AuthController {
   @ApiResponse(responseCode = "400", description = "Invalid request")
   public ResponseEntity<MessageResponse> forgotPassword(
       @Valid @RequestBody ForgotPasswordRequest request) {
-
     log.info("Password reset requested for email: {}", request.email());
-
     authService.forgotPassword(request);
-
+    log.info("Password reset link sent successfully to: {}", request.email());
     return ResponseEntity.ok(new MessageResponse("Password reset link sent successfully"));
   }
 
@@ -136,7 +163,7 @@ public class AuthController {
       @Valid @RequestBody ResetPasswordRequest request) {
     log.info("Reset password request received");
     authService.resetPassword(request);
-
+    log.info("Password reset successful");
     return ResponseEntity.ok(new MessageResponse("Password reset successfully"));
   }
 
@@ -150,7 +177,7 @@ public class AuthController {
   public ResponseEntity<MessageResponse> sendOtp(@RequestBody SendOtpRequest request) {
     log.info("Send OTP request received for email: {}", request.email());
     authService.sendOtp(request);
-
+    log.info("OTP sent successfully to: {}", request.email());
     return ResponseEntity.ok(new MessageResponse("OTP sent successfully"));
   }
 
@@ -162,7 +189,54 @@ public class AuthController {
   public ResponseEntity<MessageResponse> verifyOtp(@RequestBody VerifyOtpRequest request) {
     log.info("Verify OTP request received for email: {}", request.email());
     authService.verifyOtp(request);
-
+    log.info("OTP verified successfully for: {}", request.email());
     return ResponseEntity.ok(new MessageResponse("OTP verified successfully"));
+  }
+
+  @PostMapping("/enable-mfa")
+  @Operation(summary = "Enable MFA", description = "Enables Multi-Factor Authentication (MFA)")
+  @ApiResponse(responseCode = "200", description = "MFA enabled successfully")
+  @ApiResponse(responseCode = "401", description = "Invalid credentials")
+  @ApiResponse(responseCode = "400", description = "Invalid request")
+  public ResponseEntity<MessageResponse> enableMfa(@RequestBody EnableMfaRequest request) {
+    log.info("Enable MFA request received for email: {}", request.email());
+    authService.enableMfa(request);
+    log.info("MFA enabled successfully for: {}", request.email());
+    return ResponseEntity.ok(new MessageResponse("MFA enabled successfully"));
+  }
+
+  @PostMapping("/disable-mfa")
+  @Operation(summary = "Disable MFA", description = "Disables Multi-Factor Authentication (MFA)")
+  @ApiResponse(responseCode = "200", description = "MFA disabled successfully")
+  @ApiResponse(responseCode = "401", description = "Invalid credentials")
+  @ApiResponse(responseCode = "400", description = "Invalid request")
+  public ResponseEntity<MessageResponse> disableMfa(@RequestBody DisableMfaRequest request) {
+    log.info("Disable MFA request received for email: {}", request.email());
+    authService.disableMfa(request);
+    log.info("MFA disabled successfully for: {}", request.email());
+    return ResponseEntity.ok(new MessageResponse("MFA disabled successfully"));
+  }
+
+  @GetMapping("/sessions")
+  @Operation(summary = "Get user sessions", description = "Returns a list of user sessions")
+  @ApiResponse(responseCode = "200", description = "List of user sessions")
+  @ApiResponse(responseCode = "401", description = "Invalid credentials")
+  @ApiResponse(responseCode = "400", description = "Invalid request")
+  public ResponseEntity<List<SessionResponse>> getSessions(Authentication authentication) {
+    log.info("Get sessions request received");
+    return ResponseEntity.ok(authService.getSessions(authentication.getName()));
+  }
+
+  @DeleteMapping("/sessions/{sessionId}")
+  @Operation(summary = "Delete user session", description = "Deletes a user session")
+  @ApiResponse(responseCode = "200", description = "Session deleted successfully")
+  @ApiResponse(responseCode = "401", description = "Invalid credentials")
+  @ApiResponse(responseCode = "400", description = "Invalid request")
+  public ResponseEntity<Void> deleteSession(
+      @PathVariable Long sessionId, Authentication authentication) {
+    log.info("Delete session request received for session ID: {}", sessionId);
+    authService.deleteSession(sessionId, authentication.getName());
+
+    return ResponseEntity.noContent().build();
   }
 }

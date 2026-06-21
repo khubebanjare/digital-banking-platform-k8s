@@ -37,8 +37,12 @@ public class SecurityConfig {
             auth ->
                 auth.requestMatchers(
                         "/api/v1/auth/register",
+                        "/api/v1/auth/verify-email",
                         "/api/v1/auth/login",
                         "/api/v1/auth/refresh-token",
+                        "/api/v1/auth/send-otp",
+                        "/api/v1/auth/verify-otp",
+                        "/api/v1/auth/enable-mfa",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/v3/api-docs/**")

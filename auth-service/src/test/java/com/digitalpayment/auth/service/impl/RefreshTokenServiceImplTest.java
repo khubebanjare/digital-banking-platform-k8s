@@ -177,4 +177,26 @@ class RefreshTokenServiceImplTest {
 
     assertNotEquals(result1.getToken(), result2.getToken());
   }
+
+  @Test
+  void testRevokeToken_Success() {
+    String token = "test-token";
+    when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.of(refreshToken));
+
+    refreshTokenService.revokeToken(token);
+
+    verify(refreshTokenRepository).findByToken(token);
+    verify(refreshTokenRepository).delete(refreshToken);
+  }
+
+  @Test
+  void testRevokeToken_InvalidToken() {
+    String token = "invalid-token";
+    when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.empty());
+
+    assertThrows(AuthenticationException.class, () -> refreshTokenService.revokeToken(token));
+
+    verify(refreshTokenRepository).findByToken(token);
+    verify(refreshTokenRepository, never()).delete(any(RefreshToken.class));
+  }
 }

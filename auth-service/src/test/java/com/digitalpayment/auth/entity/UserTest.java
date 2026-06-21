@@ -137,6 +137,8 @@ class UserTest {
             true,
             true,
             true,
+            false,
+            false,
             LocalDateTime.now(),
             LocalDateTime.now());
 
