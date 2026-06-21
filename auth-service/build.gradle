@@ -110,7 +110,7 @@ dependencyCheck {
 		implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
 		implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 		implementation 'io.micrometer:micrometer-registry-otlp'
-		implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.13.0-alpha'
+		implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.29.0-alpha'
 		implementation 'io.opentelemetry:opentelemetry-api-incubator:1.55.0-alpha'
 
 		compileOnly 'org.projectlombok:lombok'
