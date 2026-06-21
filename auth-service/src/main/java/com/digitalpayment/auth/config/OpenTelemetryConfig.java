@@ -14,38 +14,37 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenTelemetryConfig {
 
-    @Value("${grafana.otlp.endpoint}")
-    private String otlpEndpoint;
+  @Value("${grafana.otlp.endpoint}")
+  private String otlpEndpoint;
 
-    @Value("${grafana.otlp.auth}")
-    private String otlpAuth;
+  @Value("${grafana.otlp.auth}")
+  private String otlpAuth;
 
-    @Bean
-    public OpenTelemetrySdk openTelemetrySdk() {
-        Resource resource = Resource.getDefault().toBuilder()
-                .put(AttributeKey.stringKey("service.name"), "auth-service")
-                .put(AttributeKey.stringKey("service.namespace"), "digital-banking")
-                .build();
+  @Bean
+  public OpenTelemetrySdk openTelemetrySdk() {
+    Resource resource =
+        Resource.getDefault().toBuilder()
+            .put(AttributeKey.stringKey("service.name"), "auth-service")
+            .put(AttributeKey.stringKey("service.namespace"), "digital-banking")
+            .build();
 
+    OtlpHttpLogRecordExporter logExporter =
+        OtlpHttpLogRecordExporter.builder()
+            .setEndpoint(otlpEndpoint + "/v1/logs")
+            .addHeader("Authorization", otlpAuth)
+            .build();
 
-        OtlpHttpLogRecordExporter logExporter = OtlpHttpLogRecordExporter.builder()
-                .setEndpoint(otlpEndpoint + "/v1/logs")   // ← HTTP needs the /v1/logs path
-                .addHeader("Authorization", otlpAuth)
-                .build();
+    SdkLoggerProvider loggerProvider =
+        SdkLoggerProvider.builder()
+            .setResource(resource)
+            .addLogRecordProcessor(BatchLogRecordProcessor.builder(logExporter).build())
+            .build();
 
-        SdkLoggerProvider loggerProvider = SdkLoggerProvider.builder()
-                .setResource(resource)
-                .addLogRecordProcessor(BatchLogRecordProcessor.builder(logExporter).build())
-                .build();
+    OpenTelemetrySdk sdk =
+        OpenTelemetrySdk.builder().setLoggerProvider(loggerProvider).buildAndRegisterGlobal();
 
-        OpenTelemetrySdk sdk = OpenTelemetrySdk.builder()
-                .setLoggerProvider(loggerProvider)
-                .buildAndRegisterGlobal();
+    OpenTelemetryAppender.install(sdk);
 
-        // Wire the logback appender to this SDK instance
-        OpenTelemetryAppender.install(sdk);
-
-        return sdk;
-    }
-
+    return sdk;
+  }
 }

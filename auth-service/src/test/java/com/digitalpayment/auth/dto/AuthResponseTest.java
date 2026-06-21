@@ -1,49 +1,129 @@
 package com.digitalpayment.auth.dto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.digitalpayment.auth.entity.Role;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class AuthResponseTest {
 
   @Test
+  void shouldCreateAuthResponse() {
+
+    UUID userId = UUID.randomUUID();
+
+    AuthResponse response =
+        new AuthResponse(
+            "access-token",
+            "refresh-token",
+            "Bearer",
+            86400L,
+            userId,
+            "john@example.com",
+            Role.USER);
+
+    assertEquals("access-token", response.accessToken());
+    assertEquals("refresh-token", response.refreshToken());
+    assertEquals("Bearer", response.tokenType());
+    assertEquals(86400L, response.expiresIn());
+    assertEquals(userId, response.userId());
+    assertEquals("john@example.com", response.email());
+    assertEquals(Role.USER, response.role());
+  }
+
+  @Test
+  void shouldSupportEquality() {
+
+    UUID userId = UUID.randomUUID();
+
+    AuthResponse response1 =
+        new AuthResponse(
+            "access-token",
+            "refresh-token",
+            "Bearer",
+            86400L,
+            userId,
+            "john@example.com",
+            Role.USER);
+
+    AuthResponse response2 =
+        new AuthResponse(
+            "access-token",
+            "refresh-token",
+            "Bearer",
+            86400L,
+            userId,
+            "john@example.com",
+            Role.USER);
+
+    assertEquals(response1, response2);
+    assertEquals(response1.hashCode(), response2.hashCode());
+  }
+
+  @Test
   void testAuthResponseCreation() {
     UUID userId = UUID.randomUUID();
     com.digitalpayment.auth.dto.AuthResponse response =
-        new AuthResponse("token", "Bearer", userId, "john@example.com", "John", "Doe");
+        new AuthResponse(
+            "access-token",
+            "refresh-token",
+            "Bearer",
+            86400L,
+            userId,
+            "john@example.com",
+            Role.USER);
 
-    assertEquals("token", response.getToken());
-    assertEquals("Bearer", response.getTokenType());
-    assertEquals(userId, response.getId());
-    assertEquals("john@example.com", response.getEmail());
-    assertEquals("John", response.getFirstName());
-    assertEquals("Doe", response.getLastName());
+    assertEquals("access-token", response.accessToken());
+    assertEquals("refresh-token", response.refreshToken());
+    assertEquals("Bearer", response.tokenType());
+    assertEquals(86400L, response.expiresIn());
+    assertEquals(userId, response.userId());
+    assertEquals("john@example.com", response.email());
+    assertEquals(Role.USER, response.role());
   }
 
   @Test
-  void testAuthResponseNoArgsConstructor() {
-    AuthResponse response = new AuthResponse();
-    assertNotNull(response);
-    assertEquals("Bearer", response.getTokenType());
-  }
-
-  @Test
-  void testAuthResponseSetters() {
-    AuthResponse response = new AuthResponse();
+  void testAuthResponseWithAdminRole() {
     UUID userId = UUID.randomUUID();
+    AuthResponse response =
+        new AuthResponse(
+            "access-token",
+            "refresh-token",
+            "Bearer",
+            86400L,
+            userId,
+            "admin@example.com",
+            Role.ADMIN);
 
-    response.setToken("new-token");
-    response.setTokenType("Bearer");
-    response.setId(userId);
-    response.setEmail("jane@example.com");
-    response.setFirstName("Jane");
-    response.setLastName("Smith");
+    assertEquals("access-token", response.accessToken());
+    assertEquals("refresh-token", response.refreshToken());
+    assertEquals("Bearer", response.tokenType());
+    assertEquals(86400L, response.expiresIn());
+    assertEquals(userId, response.userId());
+    assertEquals("admin@example.com", response.email());
+    assertEquals(Role.ADMIN, response.role());
+  }
 
-    assertEquals("new-token", response.getToken());
-    assertEquals("Bearer", response.getTokenType());
-    assertEquals(userId, response.getId());
-    assertEquals("jane@example.com", response.getEmail());
+  @Test
+  void testAuthResponseWithSuperAdminRole() {
+    UUID userId = UUID.randomUUID();
+    AuthResponse response =
+        new AuthResponse(
+            "access-token",
+            "refresh-token",
+            "Bearer",
+            86400L,
+            userId,
+            "superadmin@example.com",
+            Role.SUPER_ADMIN);
+
+    assertEquals("access-token", response.accessToken());
+    assertEquals("refresh-token", response.refreshToken());
+    assertEquals("Bearer", response.tokenType());
+    assertEquals(86400L, response.expiresIn());
+    assertEquals(userId, response.userId());
+    assertEquals("superadmin@example.com", response.email());
+    assertEquals(Role.SUPER_ADMIN, response.role());
   }
 }

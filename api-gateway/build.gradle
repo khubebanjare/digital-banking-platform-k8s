@@ -23,14 +23,22 @@ ext {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-//	implementation 'org.springframework.boot:spring-boot-starter-security'
-//	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-//	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webmvc'
-//	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-//	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
-//	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+	implementation 'io.opentelemetry:opentelemetry-api'
+	implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
+	implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+	implementation 'io.micrometer:micrometer-registry-otlp'
+	implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.13.0-alpha'
+	implementation 'io.opentelemetry:opentelemetry-api-incubator:1.55.0-alpha'
 
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+	implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -39,8 +47,7 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
 
-//	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
