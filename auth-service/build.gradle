@@ -105,7 +105,7 @@ dependencyCheck {
 		implementation 'org.springframework.boot:spring-boot-starter-actuator'
 		implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 		implementation 'io.opentelemetry:opentelemetry-api'
-		implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+		implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
 		implementation 'io.micrometer:micrometer-registry-prometheus'
 		implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
 		implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
