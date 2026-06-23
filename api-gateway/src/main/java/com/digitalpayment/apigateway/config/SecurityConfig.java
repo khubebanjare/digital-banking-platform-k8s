@@ -1,6 +1,7 @@
 package com.digitalpayment.apigateway.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -17,11 +18,13 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 @Configuration
 @EnableWebFluxSecurity
+@Slf4j
 public class SecurityConfig {
 
     private final VaultProperties vaultProperties;
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+        log.info("Configuring security filter chain");
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
@@ -46,6 +49,7 @@ public class SecurityConfig {
 
     @Bean
     ReactiveJwtDecoder jwtDecoder() {
+        log.info("Configuring JWT decoder");
         SecretKey key =
                 new SecretKeySpec(
                         vaultProperties.getSecret().getBytes(StandardCharsets.UTF_8),
