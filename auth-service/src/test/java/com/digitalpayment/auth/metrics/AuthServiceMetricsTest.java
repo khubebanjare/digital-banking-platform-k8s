@@ -6,40 +6,40 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 
-class AuthMetricsTest {
+class AuthServiceMetricsTest {
 
   @Test
   void testAuthMetricsInitialization() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     assertNotNull(authMetrics);
   }
 
   @Test
   void testGetLoginSuccessCounter() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     assertNotNull(authMetrics.getLoginSuccessCounter());
   }
 
   @Test
   void testGetLoginFailureCounter() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     assertNotNull(authMetrics.getLoginFailureCounter());
   }
 
   @Test
   void testGetRegistrationSuccessCounter() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     assertNotNull(authMetrics.getRegistrationSuccessCounter());
   }
 
   @Test
   void testLoginSuccessCounterIsNotNull() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     Counter counter = authMetrics.getLoginSuccessCounter();
     assertNotNull(counter);
   }
@@ -47,7 +47,7 @@ class AuthMetricsTest {
   @Test
   void testLoginFailureCounterIsNotNull() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     Counter counter = authMetrics.getLoginFailureCounter();
     assertNotNull(counter);
   }
@@ -55,7 +55,7 @@ class AuthMetricsTest {
   @Test
   void testRegistrationSuccessCounterIsNotNull() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     Counter counter = authMetrics.getRegistrationSuccessCounter();
     assertNotNull(counter);
   }
@@ -63,7 +63,7 @@ class AuthMetricsTest {
   @Test
   void testCountersAreDifferentInstances() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
     Counter loginSuccess = authMetrics.getLoginSuccessCounter();
     Counter loginFailure = authMetrics.getLoginFailureCounter();
     Counter registrationSuccess = authMetrics.getRegistrationSuccessCounter();
@@ -76,7 +76,7 @@ class AuthMetricsTest {
   @Test
   void testCountersCanIncrement() {
     MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
-    AuthMetrics authMetrics = new AuthMetrics(registry);
+    AuthServiceMetrics authMetrics = new AuthServiceMetrics(registry);
 
     authMetrics.getLoginSuccessCounter().increment();
     authMetrics.getLoginFailureCounter().increment();

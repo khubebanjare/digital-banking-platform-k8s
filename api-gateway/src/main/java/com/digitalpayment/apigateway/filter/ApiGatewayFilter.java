@@ -14,15 +14,16 @@ public class ApiGatewayFilter implements GatewayFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        exchange.getRequest()
-                .mutate()
-                .header("X-API-GATEWAY", "ApiGatewayFilter")
-                .header("X-Custom-Header", "MyValue")
+        ServerWebExchange mutatedExchange = exchange.mutate()
+                .request(exchange.getRequest().mutate()
+                        .header("X-API-GATEWAY", "ApiGatewayFilter")
+                        .header("X-Custom-Header", "MyValue")
+                        .build())
                 .build();
 
-        return chain.filter(exchange).then(
+        return chain.filter(mutatedExchange).then(
                 Mono.fromRunnable(() ->
-                        log.info("Response status: {}", exchange.getResponse().getStatusCode())
+                        log.info("Response status: {}", mutatedExchange.getResponse().getStatusCode())
                 ));
     }
 

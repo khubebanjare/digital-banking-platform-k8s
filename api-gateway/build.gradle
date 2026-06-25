@@ -33,7 +33,7 @@ dependencies {
 	implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 	implementation 'io.micrometer:micrometer-registry-otlp'
 	implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.13.0-alpha'
-	implementation 'io.opentelemetry:opentelemetry-api-incubator:1.55.0-alpha'
+//	implementation 'io.opentelemetry:opentelemetry-api-incubator:1.55.0-alpha'
 
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
@@ -48,6 +48,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.mockito:mockito-core'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

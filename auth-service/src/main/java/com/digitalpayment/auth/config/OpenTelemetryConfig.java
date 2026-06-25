@@ -31,18 +31,17 @@ public class OpenTelemetryConfig {
   @Value("${spring.application.name}")
   private String serviceName;
 
-    @Bean
-    public OpenTelemetry openTelemetry() {
-      log.info("Configuring OpenTelemetry tracing for service: {}", serviceName);
+  @Bean
+  public OpenTelemetry openTelemetry() {
+    log.info("Configuring OpenTelemetry tracing for service: {}", serviceName);
 
-      Resource resource =
-              Resource.getDefault()
-                      .toBuilder()
-                      .put("service.name", serviceName)
-                      .put("service.namespace", "digital-banking")
-                      .put("deployment.environment", "k8s-local")
-                      .build();
-      log.info("Creating OTLP HTTP log record exporter with endpoint: {}", otlpEndpoint);
+    Resource resource =
+        Resource.getDefault().toBuilder()
+            .put("service.name", serviceName)
+            .put("service.namespace", "digital-banking")
+            .put("deployment.environment", "k8s-local")
+            .build();
+    log.info("Creating OTLP HTTP log record exporter with endpoint: {}", otlpEndpoint);
     OtlpHttpLogRecordExporter logExporter =
         OtlpHttpLogRecordExporter.builder()
             .setEndpoint(otlpEndpoint + "/v1/logs")
@@ -55,34 +54,32 @@ public class OpenTelemetryConfig {
             .addLogRecordProcessor(BatchLogRecordProcessor.builder(logExporter).build())
             .build();
 
-      SpanExporter spanExporter =
-              OtlpGrpcSpanExporter.builder()
-                      .setEndpoint(otlpEndpoint)
-                      .addHeader("Authorization", "Bearer " + otlpAuth)
-                      .build();
+    SpanExporter spanExporter =
+        OtlpGrpcSpanExporter.builder()
+            .setEndpoint(otlpEndpoint)
+            .addHeader("Authorization", "Bearer " + otlpAuth)
+            .build();
 
-      SdkTracerProvider tracerProvider =
-              SdkTracerProvider.builder()
-                      .addSpanProcessor(BatchSpanProcessor.builder(spanExporter).build())
-                      .setResource(resource)
-                      .build();
+    SdkTracerProvider tracerProvider =
+        SdkTracerProvider.builder()
+            .addSpanProcessor(BatchSpanProcessor.builder(spanExporter).build())
+            .setResource(resource)
+            .build();
 
-      OpenTelemetry openTelemetry =
-              OpenTelemetrySdk.builder()
-                      .setLoggerProvider(loggerProvider)
-                      .setTracerProvider(tracerProvider)
-                      .setPropagators(
-                              ContextPropagators.create(JaegerPropagator.getInstance()))
-                      .buildAndRegisterGlobal();
+    OpenTelemetry openTelemetry =
+        OpenTelemetrySdk.builder()
+            .setLoggerProvider(loggerProvider)
+            .setTracerProvider(tracerProvider)
+            .setPropagators(ContextPropagators.create(JaegerPropagator.getInstance()))
+            .buildAndRegisterGlobal();
 
-      log.info("OpenTelemetry tracing configured successfully");
-      return openTelemetry;
-    }
+    log.info("OpenTelemetry tracing configured successfully");
+    return openTelemetry;
+  }
 
   @Bean
   public Tracer tracer(OpenTelemetry openTelemetry) {
     log.info("Initializing OpenTelemetry Tracer");
     return openTelemetry.getTracer(serviceName, "1.0.0");
   }
-
 }

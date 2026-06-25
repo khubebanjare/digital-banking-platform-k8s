@@ -9,7 +9,7 @@ import com.digitalpayment.auth.config.JwtProperties;
 import com.digitalpayment.auth.dto.*;
 import com.digitalpayment.auth.entity.*;
 import com.digitalpayment.auth.exception.*;
-import com.digitalpayment.auth.metrics.AuthMetrics;
+import com.digitalpayment.auth.metrics.AuthServiceMetrics;
 import com.digitalpayment.auth.repository.EmailVerificationTokenRepository;
 import com.digitalpayment.auth.repository.OtpTokenRepository;
 import com.digitalpayment.auth.repository.PasswordResetTokenRepository;
@@ -56,7 +56,7 @@ class AuthServiceImplTest {
 
   @Mock private AuthenticationManager authenticationManager;
 
-  @Mock private AuthMetrics authMetrics;
+  @Mock private AuthServiceMetrics authMetrics;
 
   @Mock private Counter loginSuccessCounter;
 
