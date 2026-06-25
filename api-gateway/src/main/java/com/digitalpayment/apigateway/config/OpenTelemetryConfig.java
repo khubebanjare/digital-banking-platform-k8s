@@ -1,12 +1,18 @@
 package com.digitalpayment.apigateway.config;
 
-import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.exporter.otlp.http.logs.OtlpHttpLogRecordExporter;
-import io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender;
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
+import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.logs.SdkLoggerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
 import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,35 +28,61 @@ public class OpenTelemetryConfig {
   @Value("${grafana.otlp.auth}")
   private String otlpAuth;
 
+
+  @Value("${spring.application.name}")
+  private String serviceName;
+
   @Bean
-  public OpenTelemetrySdk openTelemetrySdk() {
-    log.info("Configuring OpenTelemetry SDK for api-gateway");
+  public OpenTelemetry openTelemetry() {
+    log.info("Configuring OpenTelemetry tracing for service: {}", serviceName);
+
     Resource resource =
-        Resource.getDefault().toBuilder()
-            .put(AttributeKey.stringKey("service.name"), "api-gateway")
-            .put(AttributeKey.stringKey("service.namespace"), "digital-banking")
-            .build();
+            Resource.getDefault()
+                    .toBuilder()
+                    .put("service.name", serviceName)
+                    .put("service.namespace", "digital-banking")
+                    .put("deployment.environment", "k8s-local")
+                    .build();
+
+    SpanExporter spanExporter =
+            OtlpGrpcSpanExporter.builder()
+                    .setEndpoint(otlpEndpoint)
+                    .addHeader("Authorization", "Bearer " + otlpAuth)
+                    .build();
+
+    SdkTracerProvider tracerProvider =
+            SdkTracerProvider.builder()
+                    .addSpanProcessor(BatchSpanProcessor.builder(spanExporter).build())
+                    .setResource(resource)
+                    .build();
 
     log.info("Creating OTLP HTTP log record exporter with endpoint: {}", otlpEndpoint);
     OtlpHttpLogRecordExporter logExporter =
-        OtlpHttpLogRecordExporter.builder()
-            .setEndpoint(otlpEndpoint + "/v1/logs") // ← HTTP needs the /v1/logs path
-            .addHeader("Authorization", otlpAuth)
-            .build();
+            OtlpHttpLogRecordExporter.builder()
+                    .setEndpoint(otlpEndpoint + "/v1/logs") // ← HTTP needs the /v1/logs path
+                    .addHeader("Authorization", otlpAuth)
+                    .build();
 
     SdkLoggerProvider loggerProvider =
-        SdkLoggerProvider.builder()
-            .setResource(resource)
-            .addLogRecordProcessor(BatchLogRecordProcessor.builder(logExporter).build())
-            .build();
+            SdkLoggerProvider.builder()
+                    .setResource(resource)
+                    .addLogRecordProcessor(BatchLogRecordProcessor.builder(logExporter).build())
+                    .build();
 
-    OpenTelemetrySdk sdk =
-        OpenTelemetrySdk.builder().setLoggerProvider(loggerProvider).buildAndRegisterGlobal();
+    OpenTelemetry openTelemetry =
+            OpenTelemetrySdk.builder()
+                    .setLoggerProvider(loggerProvider)
+                    .setTracerProvider(tracerProvider)
+                    .setPropagators(
+                            ContextPropagators.create(JaegerPropagator.getInstance()))
+                    .buildAndRegisterGlobal();
 
-    // Wire the logback appender to this SDK instance
-    OpenTelemetryAppender.install(sdk);
+    log.info("OpenTelemetry tracing configured successfully");
+    return openTelemetry;
+  }
 
-    log.info("OpenTelemetry SDK configured successfully");
-    return sdk;
+  @Bean
+  public Tracer tracer(OpenTelemetry openTelemetry) {
+    return openTelemetry.getTracer(serviceName, "1.0.0");
   }
 }

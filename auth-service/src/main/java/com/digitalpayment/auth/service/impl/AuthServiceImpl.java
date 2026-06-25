@@ -5,7 +5,7 @@ import com.digitalpayment.auth.constants.AuthConstants;
 import com.digitalpayment.auth.dto.*;
 import com.digitalpayment.auth.entity.*;
 import com.digitalpayment.auth.exception.*;
-import com.digitalpayment.auth.metrics.AuthMetrics;
+import com.digitalpayment.auth.metrics.AuthServiceMetrics;
 import com.digitalpayment.auth.repository.*;
 import com.digitalpayment.auth.service.EmailService;
 import com.digitalpayment.auth.service.IAuthService;
@@ -40,7 +40,7 @@ public class AuthServiceImpl implements IAuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtUtil jwtUtil;
   private final AuthenticationManager authenticationManager;
-  private final AuthMetrics authMetrics;
+  private final AuthServiceMetrics authMetrics;
   private final ObservationRegistry observationRegistry;
   private final RefreshTokenService refreshTokenService;
   private final JwtProperties jwtProperties;

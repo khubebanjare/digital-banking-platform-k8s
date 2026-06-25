@@ -11,6 +11,8 @@ public class AuthConstants {
   public static final String EMAIL_NOT_VERIFIED = "Email not verified";
   public static final String FROM_EMAIL = "khube.banjare@khube.in";
   public static final String FROM_NAME = "Digital Payment Team";
+  public static final String SERVICE_NAME = "auth-service";
+  public static final String SERVICE = "service";
 
   private AuthConstants() {}
 }
