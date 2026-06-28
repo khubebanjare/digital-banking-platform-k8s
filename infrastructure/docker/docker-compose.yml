@@ -1,9 +1,19 @@
+  version: "3.9"
+
   services:
 
     postgres:
       image: postgres:17
 
       container_name: postgres
+
+      restart: unless-stopped
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
 
       environment:
         POSTGRES_DB: auth_k8s_db
@@ -25,13 +35,245 @@
       networks:
         - digital-payment-network
 
+    redis:
+      image: redis:7
+
+      container_name: redis
+
+      restart: unless-stopped
+
+      ports:
+        - "6379:6379"
+
+      command:
+        - redis-server
+        - --appendonly
+        - "yes"
+
+      healthcheck:
+        test: [ "CMD", "redis-cli", "ping" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      volumes:
+        - redis_data:/data
+
+      networks:
+        - digital-payment-network
+
+    vault:
+      image: hashicorp/vault:1.20
+
+      container_name: vault
+
+      restart: unless-stopped
+
+      cap_add:
+        - IPC_LOCK
+
+      command:
+        - server
+        - -dev
+
+      environment:
+        VAULT_DEV_ROOT_TOKEN_ID: root
+        VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+
+      ports:
+        - "8200:8200"
+
+      healthcheck:
+        test:
+          [
+            "CMD",
+            "wget",
+            "--spider",
+            "-q",
+            "http://localhost:8200/v1/sys/health"
+          ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      volumes:
+        - vault_data:/vault/file
+
+      networks:
+        - digital-payment-network
+
+    prometheus:
+      image: prom/prometheus:v3.5.0
+
+      container_name: prometheus
+
+      restart: unless-stopped
+
+      ports:
+        - "9090:9090"
+
+      volumes:
+        - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+        - prometheus_data:/prometheus
+
+      command:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+
+      healthcheck:
+        test: [ "CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy" ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      networks:
+        - digital-payment-network
+
+    loki:
+      image: grafana/loki:3.0.0
+
+      container_name: loki
+
+      restart: unless-stopped
+
+      ports:
+        - "3100:3100"
+
+      command:
+        - "-config.file=/etc/loki/loki-config.yml"
+
+      volumes:
+        - ../observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+        - loki_data:/loki
+
+      healthcheck:
+        test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      networks:
+        - digital-payment-network
+
+    tempo:
+      image: grafana/tempo:2.8.2
+
+      container_name: tempo
+
+      restart: unless-stopped
+
+      command:
+        - "-config.file=/etc/tempo/tempo.yml"
+
+      ports:
+        - "3200:3200"
+        - "4319:4317"
+
+      volumes:
+        - ../observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+        - tempo_data:/var/tempo
+
+      healthcheck:
+        test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3200/ready" ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      networks:
+        - digital-payment-network
+
+    grafana:
+      image: grafana/grafana:12.1.0
+
+      container_name: grafana
+
+      restart: unless-stopped
+
+      depends_on:
+        prometheus:
+          condition: service_healthy
+
+        loki:
+          condition: service_healthy
+
+        tempo:
+          condition: service_healthy
+
+      ports:
+        - "3000:3000"
+
+      volumes:
+        - grafana_data:/var/lib/grafana
+        - ../observability/grafana/provisioning:/etc/grafana/provisioning
+        - ../observability/grafana/dashboards:/var/lib/grafana/dashboards
+
+      environment:
+        GF_SECURITY_ADMIN_USER: admin
+        GF_SECURITY_ADMIN_PASSWORD: admin
+
+      healthcheck:
+        test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health" ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      networks:
+        - digital-payment-network
 
 
     config-server:
       build:
         context: ../../config-server
+        dockerfile: Dockerfile
 
+      image: config-server:1.0
       container_name: config-server
+      restart: unless-stopped
+
+      depends_on:
+        vault:
+          condition: service_healthy
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
 
       ports:
         - "9999:9999"
@@ -44,7 +286,6 @@
 
       environment:
         SPRING_PROFILES_ACTIVE: docker
-        SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
 
       networks:
         - digital-payment-network
@@ -53,19 +294,34 @@
     auth-service:
       build:
         context: ../../auth-service
+        dockerfile: Dockerfile
+
+      image: auth-service:1.0
+
+      container_name: auth-service
+
+      restart: unless-stopped
 
       depends_on:
         postgres:
           condition: service_healthy
+        redis:
+          condition: service_started
+        vault:
+          condition: service_healthy
         config-server:
           condition: service_healthy
         otel-collector:
-          condition: service_started
+          condition: service_healthy
 
-      container_name: auth-service
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
 
       ports:
-        - "8081:8080"
+        - "8081:8081"
 
       environment:
         SPRING_PROFILES_ACTIVE: docker
@@ -74,15 +330,17 @@
         OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
         OTEL_EXPORTER_OTLP_PROTOCOL: grpc
 
-        JAVA_TOOL_OPTIONS: javaagent:/app/opentelemetry-javaagent.jar
-
       networks:
         - digital-payment-network
 
 
     otel-collector:
-      image: otel/opentelemetry-collector-contrib:latest
+
+      image: otel/opentelemetry-collector-contrib:v0.155.0
+
       container_name: otel-collector
+
+      restart: unless-stopped
 
       command:
         - "--config=/etc/otelcol/config.yaml"
@@ -91,34 +349,78 @@
         - "4317:4317"
         - "4318:4318"
 
-      volumes:
-        - ./otel-collector-config.yaml:/etc/otelcol/config.yaml
+      depends_on:
+        prometheus:
+          condition: service_healthy
+        loki:
+          condition: service_healthy
+        tempo:
+          condition: service_healthy
 
-      restart: unless-stopped
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      volumes:
+        - ../observability/otel/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+
+      healthcheck:
+        test: [ "CMD", "wget", "--spider", "-q", "http://localhost:13133" ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
 
       networks:
         - digital-payment-network
 
+    api-gateway:
+      build:
+        context: ../../api-gateway
+        dockerfile: Dockerfile
 
-#    api-gateway:
-#      build:
-#        context: ../../api-gateway
-#
-#      depends_on:
-#        config-server:
-#          condition: service_healthy
-#
-#      container_name: api-gateway
-#
-#      ports:
-#        - "8080:8080"
-#
-#      environment:
-#        SPRING_PROFILES_ACTIVE: docker
-#        SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
-#
-#      networks:
-#        - digital-payment-network
+      image: api-gateway:1.0
+
+      container_name: api-gateway
+
+      restart: unless-stopped
+
+      depends_on:
+        redis:
+          condition: service_started
+
+        vault:
+          condition: service_healthy
+
+        config-server:
+          condition: service_healthy
+
+        auth-service:
+          condition: service_healthy
+
+        otel-collector:
+          condition: service_healthy
+
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+
+      ports:
+        - "8082:8082"
+
+      environment:
+        SPRING_PROFILES_ACTIVE: docker
+        SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:9999
+
+        OTEL_SERVICE_NAME: api-gateway
+        OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+        OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+      networks:
+        - digital-payment-network
 #
 #
 #    wallet-service:
@@ -145,9 +447,16 @@
 
 
   networks:
+
     digital-payment-network:
       driver: bridge
 
-
   volumes:
+
     postgres_data:
+    redis_data:
+    vault_data:
+    prometheus_data:
+    loki_data:
+    tempo_data:
+    grafana_data:

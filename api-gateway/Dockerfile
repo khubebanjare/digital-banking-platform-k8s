@@ -3,7 +3,7 @@
 # =========================================
 FROM gradle:9.5.1-jdk21 AS build
 
-WORKDIR /digital-payment/auth-service
+WORKDIR /digital-payment/api-gateway
 
 COPY . .
 
@@ -15,14 +15,14 @@ RUN chmod +x gradlew && \
 # =========================================
 FROM eclipse-temurin:21-jre
 
-WORKDIR /digital-payment/auth-service
+WORKDIR /digital-payment/api-gateway
 
 COPY --from=build \
-    /digital-payment/auth-service/build/libs/*.jar \
-    auth-service.jar
+    /digital-payment/api-gateway/build/libs/*.jar \
+    api-gateway.jar
 
 COPY agents/opentelemetry-javaagent.jar /digital-payment/auth-service/opentelemetry-javaagent.jar
 
-EXPOSE 8081
+EXPOSE 8082
 
-ENTRYPOINT ["java","-jar","auth-service.jar"]
+ENTRYPOINT ["java","-jar","api-gateway.jar"]
